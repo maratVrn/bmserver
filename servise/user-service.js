@@ -40,7 +40,7 @@ class UserService {
         // Создаем пользователя в базе данных
         let crRole = "USER"
         if (email === 'begisgevmr@mail.ru')  crRole = "ADMIN"
-        const user = await Users.create({email, password, role: crRole, activationLink})
+        const user = await Users.create({email, password : hashPassword, role: crRole, activationLink})
         console.log('Получили user '+user);
 
 
@@ -128,15 +128,14 @@ class UserService {
     }
 
     async login(email, password) {
-        console.log('--------------');
-        console.log(email);
 
         const user = await  Users.findOne( {where: {email:email}} )
-        console.log(user);
+
         if (!user){
             throw ApiError.BadRequest('Пользователь с таким email не найден')
         }
         // Проверяем совпадает ли пароли - предварительно хэшируем
+
         const isPassEquals = await bcrypt.compare(password, user.password)
         if (!isPassEquals){
             throw ApiError.BadRequest('Некоректный пароль')
@@ -146,11 +145,8 @@ class UserService {
         const userDto = new UserDto(user)
         const tokens = tokenService.generateTokens({...userDto})
         await  tokenService.saveToken(userDto.id, tokens.refreshToken)
-        // return{...tokens, user: userDto}
         return{...tokens, user: user}
-
-
-    }
+  }
 
     async getAllUsers (){
         const users = await Users.findAll()
