@@ -20,8 +20,23 @@ app.use('/api', router)
 // Подключать вконце!
 app.use(errorMiddleware)
 
+const testData = [
+    {
+        id : 1,
+        body : "доступ к телу есть"
+    }
+]
+
 const start = async () => {
     try {
+        await sequelize.authenticate()
+        await sequelize.sync()
+
+        app.get('/test', (req, res) => {
+            res.send(JSON.stringify(testData))
+
+        })
+
         await sequelize.authenticate()
         await sequelize.sync()
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
