@@ -29,7 +29,8 @@ class UserService {
         try {
             await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
         } catch (e) {
-
+            console.log(e);
+            console.log(e.message);
             throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
 
         }
