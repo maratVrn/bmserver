@@ -10,8 +10,10 @@ const bcrypt = require('bcrypt')
 
 class UserService {
     async registration (email, password) {
+        console.log('in UserService');
         const candidate = await  Users.findOne( {where: {email:email}} )
         if (candidate){
+            console.log(`Пользователь с емайл ${email} уже существует`);
             throw ApiError.BadRequest(`Пользователь с емайл ${email} уже существует`)
         }
 
@@ -27,13 +29,16 @@ class UserService {
         try {
             await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
         } catch (e) {
-                 throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
+            console.log('Ошибка отправки письма активации проверьте правильность email ');
+            throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
+
         }
 
 
-
+        console.log('Users.create');
         // Создаем пользователя в базе данных
         const user = await Users.create({email, password: hashPassword, activationLink})
+        console.log('Получили user '+user);
 
 
         // Создаем ДТО для шифрования (получаем payload) инфо в токене

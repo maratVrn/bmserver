@@ -33,6 +33,7 @@ const start = async () => {
         await sequelize.sync()
 
         app.get('/test', (req, res) => {
+            console.log('log_work');
             res.send(JSON.stringify(testData))
 
         })
