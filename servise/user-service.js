@@ -40,7 +40,7 @@ class UserService {
         // Создаем пользователя в базе данных
         let crRole = "USER"
         if (email === 'begisgevmr@mail.ru')  crRole = "ADMIN"
-        const user = await Users.create({email, password, role: hashPassword, activationLink, crRole})
+        const user = await Users.create({email, password, role: crRole, activationLink})
         console.log('Получили user '+user);
 
 
