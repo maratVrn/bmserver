@@ -4,7 +4,7 @@ const mailService = require('./mail-service')
 const tokenService = require('./token-service')
 const UserDto = require('../models/user-dto')
 const ApiError = require('../exceptions/api-error')
-const {where} = require("sequelize");
+const uuid  = require( 'uuid');
 const bcrypt = require('bcrypt')
 
 
@@ -13,7 +13,7 @@ class UserService {
         console.log('in UserService');
         const candidate = await  Users.findOne( {where: {email:email}} )
         if (candidate){
-            console.log(`Пользователь с емайл ${email} уже существует`);
+
             throw ApiError.BadRequest(`Пользователь с емайл ${email} уже существует`)
         }
 
@@ -29,7 +29,7 @@ class UserService {
         try {
             await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
         } catch (e) {
-            console.log('Ошибка отправки письма активации проверьте правильность email ');
+
             throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
 
         }
@@ -37,7 +37,9 @@ class UserService {
 
         console.log('Users.create');
         // Создаем пользователя в базе данных
-        const user = await Users.create({email, password: hashPassword, activationLink})
+        let crRole = "USER"
+        if (email === 'begisgevmr@mail.ru')  crRole = "ADMIN"
+        const user = await Users.create({email, password, role: hashPassword, activationLink, crRole})
         console.log('Получили user '+user);
 
 
