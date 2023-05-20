@@ -96,9 +96,8 @@ class UserController{
         try {
             const {refreshToken} = req.cookies
             console.log('куки');
-            console.log(req.cookies);
-            console.log('куки2');
-            console.log(req.headers.cookie);
+            console.log(req.cookies.refreshToken);
+
             console.log('Достали refreshToken из куки');
             console.log(refreshToken);
 
