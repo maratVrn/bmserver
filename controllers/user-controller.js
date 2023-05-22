@@ -95,9 +95,10 @@ class UserController{
     async refresh (req, res, next) {
         try {
             const {refreshToken} = req.cookies
+            const {token} = req.cookies
             console.log('куки');
-            console.log(req.cookies);
-            console.log(req.cookies['refreshToken']);
+            console.log(refreshToken);
+            console.log('token  '+token);
 
             console.log('Достали refreshToken из куки');
             console.log(refreshToken);
