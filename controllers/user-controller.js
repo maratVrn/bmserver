@@ -36,7 +36,7 @@ class UserController{
             console.log('login set cookie refreshToken');
             console.log(userData.refreshToken);
 
-            res.cookie('refreshToken', userData.refreshToken, {maxAge : 30*24*60*60*1000, httpOnly: true, secure: true})
+            res.cookie('refreshToken', userData.refreshToken, {maxAge : 30*24*60*60*1000, httpOnly: false})
             return res.json(userData)
 
         } catch (e) {
