@@ -33,16 +33,16 @@ class UserController{
         try {
             const {email, password} = req.body
             const userData = await userService.login(email, password)
-            console.log('login set cookie refreshToken');
-            console.log(userData.refreshToken);
-            const cookieOptions = {
-                httpOnly: true,
-                maxAge:  30*24*60*60*1000,
-                secure: true,
-                sameSite: 'lax',
-                path: '/'
-            };
-            res.cookie('refreshToken', userData.refreshToken,cookieOptions)
+            // console.log('login set cookie refreshToken');
+            // console.log(userData.refreshToken);
+            // const cookieOptions = {
+            //     httpOnly: true,
+            //     maxAge:  30*24*60*60*1000,
+            //     secure: true,
+            //     sameSite: 'lax',
+            //     path: '/'
+            // };
+            // res.cookie('refreshToken', userData.refreshToken,cookieOptions)
             return res.json(userData)
 
         } catch (e) {
@@ -93,7 +93,6 @@ class UserController{
         try {
             const activationLink = req.params.link
             await userService.activate(activationLink)
-            // TODO: Делат редирект на страницу-заглушку сайта
             return res.redirect(process.env.CLIENT_URL)
 
         } catch (e) {
@@ -103,18 +102,25 @@ class UserController{
     }
     async refresh (req, res, next) {
         try {
-            const {refreshToken} = req.cookies
-            const {token} = req.cookies
-            console.log('куки');
-            console.log(refreshToken);
-            console.log('token  '+token);
+            // const {refreshToken} = req.cookies
+            // const {token} = req.cookies
+            // // console.log('куки');
+            // // console.log(refreshToken);
+            // // console.log('token  '+token);
+            // //
+            // // console.log('Достали refreshToken из куки');
+            // // console.log(refreshToken);
+            //
+            // const userData = await userService.refresh(refreshToken)
+            //
+            // res.cookie('refreshToken', userData.refreshToken, {maxAge : 30*24*60*60*1000, httpOnly: true, secure: false})
+            //
+            //
+            // return res.json(userData)
 
-            console.log('Достали refreshToken из куки');
-            console.log(refreshToken);
-
+            const {refreshToken} = req.body
+            console.log('------ток------ '+refreshToken)
             const userData = await userService.refresh(refreshToken)
-
-            res.cookie('refreshToken', userData.refreshToken, {maxAge : 30*24*60*60*1000, httpOnly: true, secure: false})
             return res.json(userData)
 
         } catch (e) {

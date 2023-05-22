@@ -22,7 +22,8 @@ router.post('/saveUser', userController.saveUser)
 router.post('/sendemailconfirm', userController.sendEmailConfirm)
 router.post('/logout', userController.logout)
 router.get('/activate/:link', userController.activate)
-router.get('/refresh', userController.refresh)  // Реактивация токена
+// router.get('/refresh', userController.refresh)  // Реактивация токена
+router.post('/refresh', userController.refresh)  // Реактивация токена
 router.get('/users', authMiddleware, userController.getUsers)
 
 //strategy routers
