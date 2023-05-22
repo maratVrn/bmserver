@@ -25,15 +25,15 @@ class UserService {
         // Генерируем jwt токен
 
         // Отправляем на почту ссылку для активации
-        //
-        // try {
-        //     await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
-        // } catch (e) {
-        //     console.log(e);
-        //     console.log(e.message);
-        //     throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
-        //
-        // }
+
+        try {
+            await mailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activationLink}`)
+        } catch (e) {
+            console.log(e);
+            console.log(e.message);
+            throw ApiError.BadRequest('Ошибка отправки письма активации проверьте правильность email ')
+
+        }
 
 
         console.log('Users.create');
