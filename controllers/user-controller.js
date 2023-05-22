@@ -102,7 +102,7 @@ class UserController{
             console.log(refreshToken);
 
             const userData = await userService.refresh(refreshToken)
-            'что то делаем дальще'
+
             res.cookie('refreshToken', userData.refreshToken, {maxAge : 30*24*60*60*1000, httpOnly: true})
             return res.json(userData)
 
