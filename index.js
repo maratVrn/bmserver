@@ -14,7 +14,8 @@ app.use(express.json({limit: '10mb'}));
 app.use(cookieParser());
 app.use(cors({
     credentials: true,
-    origin:process.env.CLIENT_URL
+    origin:process.env.CLIENT_URL,
+    optionsSuccessStatus: 200,
 }));
 app.use('/api', router)
 // Подключать вконце!
