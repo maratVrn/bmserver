@@ -35,8 +35,14 @@ class UserController{
             const userData = await userService.login(email, password)
             console.log('login set cookie refreshToken');
             console.log(userData.refreshToken);
-
-            res.cookie('refreshToken', userData.refreshToken, {maxAge : 30*24*60*60*1000, httpOnly: false})
+            const cookieOptions = {
+                httpOnly: true,
+                maxAge:  30*24*60*60*1000,
+                secure: true,
+                sameSite: 'lax',
+                path: '/'
+            };
+            res.cookie('refreshToken', userData.refreshToken,cookieOptions)
             return res.json(userData)
 
         } catch (e) {
