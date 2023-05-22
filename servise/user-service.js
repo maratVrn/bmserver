@@ -79,6 +79,10 @@ class UserService {
         }
         updateUser.name = user.name
         updateUser.phone = user.phone
+        updateUser.email = user.email
+        updateUser.role = user.role
+        updateUser.isActivated = user.isActivated
+        updateUser.about = user.about
 
         await updateUser.save()
 
