@@ -3,6 +3,7 @@ const userController = require('../controllers/user-controller')
 const authMiddleware = require('../controllers/auth-middleware')
 const strategyController = require('../controllers/strategy-controller')
 const briefcaseController = require('../controllers/briefcase-controller')
+const signalController = require('../controllers/signal-controller')
 
 
 const router = new Router()
@@ -51,6 +52,9 @@ router.post('/newBriefcaseData', briefcaseController.newBriefcaseData)
 router.get('/briefcaseData/:link', briefcaseController.briefcaseData)
 router.post('/deleteBriefcaseData', briefcaseController.deleteBriefcaseData)
 router.post('/saveBriefcaseData', briefcaseController.saveBriefcaseData)
+
+// signalServer routers
+router.post('/signalTest', signalController.testOne)
 
 
 module.exports = router
