@@ -54,7 +54,10 @@ router.post('/deleteBriefcaseData', briefcaseController.deleteBriefcaseData)
 router.post('/saveBriefcaseData', briefcaseController.saveBriefcaseData)
 
 // signalServer routers
-router.post('/signalTest', signalController.testOne)
+router.post('/addDealData', signalController.addDealData)
+router.post('/addPriseData', signalController.addPriseData)
+router.get('/getEndInfo/:link', signalController.getEndInfo)
+
 
 
 module.exports = router

@@ -96,16 +96,25 @@ class StrategyService {
     }
 
 
-
     async getAllStrategy (){
         const allStrategy = await Strategy.findAll()
-        allStrategy.sort((a, b) => a.id < b.id ? -1 : 1)
+        // allStrategy.sort((a, b) => a.id < b.id ? -1 : 1)
         return allStrategy
+    }
+
+    async getStrategy (name){
+        const strategy = await Strategy.findOne({where: {name:name}})
+        return strategy
     }
 
     async getStrategyData (strategyName){
         const strategyData = await StrategyData.findAll({where: {strategyName:strategyName}})
         strategyData.sort((a, b) => a.id < b.id ? -1 : 1)
+        return strategyData
+    }
+
+    async getStrategyDataYear (strategyName, year){
+        const strategyData = await StrategyData.findOne({where: {strategyName:strategyName, year : year}})
         return strategyData
     }
 

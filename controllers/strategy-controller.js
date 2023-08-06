@@ -92,10 +92,8 @@ class StrategyController{
     async allStrategy (req, res, next) {
 
         try {
-            console.log('tut');
-            const allStrategys  = await strategyService.getAllStrategy()
-            console.log(allStrategys);
-            res.json(allStrategys)
+            const allStrategy  = await strategyService.getAllStrategy()
+            res.json(allStrategy)
         } catch (e) {
             console.log(e);
             next(e)
