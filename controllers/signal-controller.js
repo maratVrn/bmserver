@@ -1,6 +1,7 @@
  const {getName, checkDeal, dataCalcStrategyDataParam, calcNewProfitData, addNewDeal, setNewPoints} = require("../servise/signal-service");
  const  strategyService = require('../servise/strategy-service')
- const {saveDealLog} = require("../servise/log");
+ const {saveDealLog, savePriseLog} = require("../servise/log");
+ const {t_sendAllNewDeal} = require("../servise/telegram-service")
 
 
 
@@ -10,15 +11,16 @@ class SignalController{
         try {
 
             // Получаем новые цены и переасчианные ендпоинты + обновляем показатели доходности последней сделки (раз в чес - 3)
-            console.log('isNew  '+req.body.isNew)
             if (req.body.seccode && req.body.isNew)
                 if (req.body.isNew === '-1'){
                     // const d = new Date ()
                     // console.log(d+'------Новые данные---------');
-
+                    // console.log(req.body.points);
                     const strategyName = getName(req.body.seccode)
                     const strategyData = await strategyService.getStrategyDataYear(strategyName, req.body.dataYear)
                     // Добавляем цены
+                    savePriseLog(req.body.seccode,req.body.data)
+
                     strategyData.ticketData = [...strategyData.ticketData, ...req.body.data]
                     // Изменяем данные о прибыли
                     if (req.body.points) {
@@ -36,7 +38,7 @@ class SignalController{
                     // Сохраняем поинты в сратегии
                     strategyService.saveStrategy(strategy)
                     return res.json('isOk')
-                } else res.json('noOk')
+                } else res.json('no new prise')
         } catch (e) {
             res.json('error')
             next(e)
@@ -64,7 +66,7 @@ class SignalController{
 
 
                     // Добавим новую сделку  в список сделок
-                    addNewDeal(strategyData, req)
+                    const newDeal = addNewDeal(strategyData, req)
                     // Перасчитываем endпоинты у данных
                     strategyData.aboutData = dataCalcStrategyDataParam(strategyData)
                     // Обновляем ендпоинты стратегии
@@ -73,6 +75,10 @@ class SignalController{
                     // Сохраняем данные
                     strategyService.saveStrategyData(strategyData)
                     strategyService.saveStrategy(strategy)
+
+                    // Отправляем сделку в телеграмм
+                    t_sendAllNewDeal(newDeal, strategyName)
+                    // Сохранием в лог
                     saveDealLog(req, false, 'Сделка успешно сохранена')
                 } else saveDealLog(req, false, checkResult)
                     return res.json('isOk')
@@ -82,6 +88,29 @@ class SignalController{
             res.json('error')
             next(e)
         }
+    }
+    async testMessageTelegram (req, res, next) {
+        let http = require('request')
+        try {
+
+           // deal, strategyName
+            const strategyName = 'Сбербанк'
+            let newDeal = {}
+
+            newDeal.x = '23.22.2023 10:20:44'
+            newDeal.y = 44.5
+            newDeal.isLong =false
+
+            t_sendAllNewDeal(newDeal,strategyName)
+
+
+            return res.json('isOk')
+
+        } catch (e) {
+            res.json('error')
+            next(e)
+        }
+
     }
 
     // Отправляем поинты чтобы понять что и как надо новое отправить сюда

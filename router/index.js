@@ -58,6 +58,8 @@ router.post('/addDealData', signalController.addDealData)
 router.post('/addPriseData', signalController.addPriseData)
 router.get('/getEndInfo/:link', signalController.getEndInfo)
 
+router.post('/telmess', signalController.testMessageTelegram)
+
 
 
 module.exports = router

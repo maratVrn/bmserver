@@ -18,6 +18,23 @@ function saveDealLog (req,startData,addtext) {
         }
     }
 }
+
+// Записываем в лог входящие цены
+function savePriseLog (seccode,data) {
+    if (seccode) {
+        const dt = new Date()
+        data.map(oneData => {
+            try {
+                fs.appendFileSync('log/' + seccode + "_prise.log", dt.toString() + ' Время цены ' + String(oneData[0]) +
+                    '  Цена  ' + String(oneData[1]) + '\n')
+
+            } catch (e) {   console.log('Ошибка записи лога сделок в цен');
+                console.log(e);}
+        })
+
+
+    }
+}
 module.exports = {
-    saveDealLog
+    saveDealLog,savePriseLog
 }

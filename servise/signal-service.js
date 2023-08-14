@@ -102,6 +102,7 @@ function addNewDeal (strategyData, req){
     if (req.body.dealType === '0') newDeal.isLong = false
     else  newDeal.isLong =true
     strategyData.dealsData.push(newDeal)
+    return newDeal
 }
 
 function checkDeal (req, endDeal){
