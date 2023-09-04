@@ -5,6 +5,7 @@ const {rulesToMonitor} = require("nodemon/lib/monitor/match");
 function getName (strategyNameIn)  {
     if (strategyNameIn === 'GAZP') return 'Газпром'
     if (strategyNameIn === 'SBER') return 'Сбербанк'
+    if (strategyNameIn === 'SBERP') return 'Сбербанк-п'
     if (strategyNameIn === 'LKOH') return 'Лукойл'
     if (strategyNameIn === 'AFLT') return 'Аэрофлот'
     if (strategyNameIn === 'ROSN') return 'Роснефть'
