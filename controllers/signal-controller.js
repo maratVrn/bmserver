@@ -39,7 +39,7 @@ class SignalController{
                         if (strategyData.dealsData.at(-1).isLong) dealResult *= -1
                         let oldSum = 0
                         if (strategyData.profitData.at(-2)[1]) oldSum = strategyData.profitData.at(-2)[1]
-                        const nowSum =parseFloat( oldSum) + parseFloat(dealResult)
+                        const nowSum = rounded2(parseFloat( oldSum) + parseFloat(dealResult))
 
 
                         strategyData.profitData.at(-1)[1] = nowSum
