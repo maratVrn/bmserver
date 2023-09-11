@@ -1,5 +1,5 @@
 
-const {Briefcase,BriefcaseData} = require('../models/models')
+const {Briefcase,BriefcaseData, StrategyData} = require('../models/models')
 const ApiError = require('../exceptions/api-error')
 const {where, DataTypes} = require("sequelize");
 
@@ -119,6 +119,12 @@ class BriefcaseService {
     async getBriefcaseData (briefcaseID){
         const briefcaseData = await BriefcaseData.findAll({where: {briefcaseID:briefcaseID}})
         briefcaseData.sort((a, b) => a.year < b.year ? -1 : 1)
+        return briefcaseData
+    }
+
+
+    async getBriefcaseDataYear (briefcaseID, year){
+        const briefcaseData = await BriefcaseData.findOne({where: {briefcaseID:briefcaseID, year : year}})
         return briefcaseData
     }
 

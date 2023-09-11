@@ -114,6 +114,7 @@ class StrategyService {
     }
 
     async getStrategyDataYear (strategyName, year){
+
         const strategyData = await StrategyData.findOne({where: {strategyName:strategyName, year : year}})
         return strategyData
     }

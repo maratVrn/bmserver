@@ -1,4 +1,4 @@
- const {getName, checkDeal, dataCalcStrategyDataParam, calcNewProfitData, addNewDeal, setNewPoints, rounded2} = require("../servise/signal-service");
+ const {getName, checkDeal, dataCalcStrategyDataParam, calcNewProfitData, addNewDeal, setNewPoints, rounded2, updateProfitData} = require("../servise/signal-service");
  const  strategyService = require('../servise/strategy-service')
  const {saveDealLog, savePriseLog} = require("../servise/log");
  const {t_sendAllNewDeal} = require("../servise/telegram-service")
@@ -32,28 +32,29 @@ class SignalController{
                     // Считыем текущую прибыль
                     if (req.body.data.at(-1)){
                         const endPrise = req.body.data.at(-1)[1]
-                        const endDate = req.body.data.at(-1)[0]
+
                         let startPrise = strategyData.dealsData.at(-1).y
                         if (startPrise <= 0) startPrise = 1
                         let dealResult = rounded2(100*(startPrise - endPrise)/startPrise)
                         if (strategyData.dealsData.at(-1).isLong) dealResult *= -1
                         let oldSum = 0
-                        if (strategyData.profitData.at(-2)[1]) oldSum = strategyData.profitData.at(-2)[1]
+                        if (strategyData.aboutData[6][1]) oldSum = strategyData.aboutData[6][1]
+
                         const nowSum = rounded2(parseFloat( oldSum) + parseFloat(dealResult))
 
 
-                        strategyData.profitData.at(-1)[1] = nowSum
-                        strategyData.profitData.at(-1)[0] = endDate
+
                         strategyData.aboutData[0][1] = nowSum+' %'
 
                         strategy.points[0][1] = dealResult+' %'
                         strategy.points[1][1] = nowSum+' %'
-
+                        console.log(strategy.points);
                     }
 
 
                     // Сохраняем обновленные данные для стратегии
                     // Сохраняем поинты в сратегии
+
                     strategyService.saveStrategy(strategy)
                     strategyService.saveStrategyData(strategyData)
                     return res.json('isOk')
@@ -76,26 +77,28 @@ class SignalController{
                 const strategyData = await strategyService.getStrategyDataYear(strategyName, req.body.dataYear)
 
                 // Если есть данные о пред сделке то делаем перерасчет данных
-                let profit = 0
+                let addProfit = 0
                 const checkResult = checkDeal(req, strategyData.dealsData.at(-1))
+
                 if (checkResult === 'isOk') {
                     if (strategyData.dealsData.at(-1)) {
-                        profit = calcNewProfitData(strategyData, req)
+                        addProfit = calcNewProfitData(strategyData, req)
                     } else strategyData.profitData.push(req.body.dealDate, '0')
-
 
                     // Добавим новую сделку  в список сделок
                     const newDeal = addNewDeal(strategyData, req)
+
                     // Перасчитываем endпоинты у данных
-                    strategyData.aboutData = dataCalcStrategyDataParam(strategyData)
+                    strategyData.aboutData = dataCalcStrategyDataParam(strategyData, addProfit)
                     // Обновляем ендпоинты стратегии
-                    setNewPoints(strategy, req, profit)
+
+                    setNewPoints(strategy, req, addProfit)
 
                     // Сохраняем данные
                     strategyService.saveStrategyData(strategyData)
                     strategyService.saveStrategy(strategy)
 
-                    // Отправляем сделку в телеграмм
+                    // // Отправляем сделку в телеграмм
                     t_sendAllNewDeal(newDeal, strategyName)
                     // Сохранием в лог
                     saveDealLog(req, false, 'Сделка успешно сохранена')
@@ -111,16 +114,16 @@ class SignalController{
     async testMessageTelegram (req, res, next) {
         let http = require('request')
         try {
-
+            updateProfitData()
            // deal, strategyName
-            const strategyName = 'Сбербанк'
-            let newDeal = {}
-
-            newDeal.x = '23.22.2023 10:20:44'
-            newDeal.y = 44.5
-            newDeal.isLong =false
-
-            t_sendAllNewDeal(newDeal,strategyName)
+           //  const strategyName = 'Сбербанк'
+           //  let newDeal = {}
+           //
+           //  newDeal.x = '23.22.2023 10:20:44'
+           //  newDeal.y = 44.5
+           //  newDeal.isLong =false
+           //
+           //  t_sendAllNewDeal(newDeal,strategyName)
 
 
             return res.json('isOk')

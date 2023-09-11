@@ -1,7 +1,9 @@
+
+const strategyService = require("./strategy-service");
+const briefcaseService = require("./briefcase-service");
+
 // TODO: привязать названние тикеров к стратегиям в БД
 // Функция кривая конечно но пока так
-const {rulesToMonitor} = require("nodemon/lib/monitor/match");
-
 function getName (strategyNameIn)  {
     if (strategyNameIn === 'GAZP') return 'Газпром'
     if (strategyNameIn === 'SBER') return 'Сбербанк'
@@ -17,7 +19,7 @@ function rounded2(number){
 }
 
 // Расчет параметров стратегии
-function dataCalcStrategyDataParam (strategyData) {
+function dataCalcStrategyDataParam (strategyData, addProfit) {
 
 
     const data = {
@@ -45,7 +47,7 @@ function dataCalcStrategyDataParam (strategyData) {
         }
     })
 
-    if (data.dealCount>0) data.middleDeal = dayCount/data.dealCount
+    data.dealCount>0?  data.middleDeal = dayCount/data.dealCount : data.middleDeal = 1
 
     let crMax = 0
     let predProfit = 0
@@ -69,8 +71,9 @@ function dataCalcStrategyDataParam (strategyData) {
         ['dealCount',String(data.dealCount)],
         ['maxStartMinus',String(rounded2(data.maxStartMinus))+' %*'],
         ['middleDeal',String(Math.ceil(data.middleDeal))],
-        ['plusDeal',String(Math.ceil(data.plusDeal))],
-        ['maxMinus', String(rounded2(data.maxMinus))+' %']
+        ['plusDeal',String(Math.ceil(data.plusDeal/data.middleDeal))],
+        ['maxMinus', String(rounded2(data.maxMinus))+' %'],
+        ['addProfit', String(addProfit)]
     ]
 
     return res
@@ -80,15 +83,13 @@ function calcNewProfitData (strategyData, req){
     let startPrise = strategyData.dealsData.at(-1).y
     if (startPrise <= 0) startPrise = 1
     let itogRes = 0
-    // Cначала перерасчитаем график прибыли и добавим новые значения
-    let predProfitSum = 0
-    if (strategyData.profitData.at(-2)) predProfitSum = strategyData.profitData.at(-2)[1]
-    if (strategyData.profitData.at(-1) && req.body.dealPrise) {
+
+    // Добавляем в историю доходности данные о прибыли на текущий момент
+    if (strategyData.aboutData[6][1] && req.body.dealPrise) {
         let dealResult = rounded2(100*(startPrise - req.body.dealPrise)/startPrise)
         if (strategyData.dealsData.at(-1).isLong) dealResult *= -1
-        itogRes = String(rounded2(parseFloat(predProfitSum)+dealResult))
-        strategyData.profitData.at(-1)[1] = itogRes
-        strategyData.profitData.at(-1)[0] = req.body.dealDate
+
+        itogRes = String(rounded2(parseFloat(strategyData.aboutData[6][1])+dealResult))
         const newProfit = [ req.body.dealDate, itogRes ]
         strategyData.profitData.push(newProfit)
     }
@@ -168,6 +169,103 @@ function setNewPoints (strategy, req, profit){
     );
 }
 
+// Разбираем строку на массив стратегий
+function dataGetBriefcaseParam (dataIn) {
+
+    const data = dataIn.split('*');
+    const res = []
+    data.map(dc => {
+
+
+        dc = dc.split('\n').join('')
+        dc = dc.split('#')
+        if (dc !== '') {
+            const add = {}
+            add.strategy = dc[0]
+            add.capital = dc[1]
+            if ((add.strategy!=='') && (add.capital))  res.push(add)
+        }
+        return 'ok'
+    })
+    return res
+}
+// Считаем прибыль портфеля в соответсвии с параметрами
+function dataCalcBriefcaseProfit (stArray, strategyProfit) {
+    let crProfit = 0
+    for (let i = 0; i < stArray.length; i++) {
+        const capital = parseFloat(stArray[i].capital)/100
+        for (let j = 0; j < strategyProfit.length; j++){
+          if  (strategyProfit[j][0] === stArray[i].strategy){
+              crProfit += parseFloat(strategyProfit[j][2])*capital
+          }
+
+        }
+    }
+    return crProfit
+}
+
+// Делаем перерасчет данных о прибыли акций и портфелей
+// Выполняется по расписанию 1 раз в день
+async function updateProfitData (){
+    const d = new Date()
+    console.log(d);
+    console.log('Выполняем обновление данных');
+    // Получаем список стратегий обновляем прибыли и сохраняем данные
+    let   newData = ''
+    const allStrategy  = await strategyService.getAllStrategy()
+    const allProfitData = []  // Массив с тек прибылями по стратегиям для расчета прибыли портфелей
+    // Для каждой стратегии расчитываем текущую прибыль и создаем новую запись  в сиске прибылей
+    for (let i = 0; i < allStrategy.length; i++) {
+        if (allStrategy[i].name) {
+
+            const strategyData = await strategyService.getStrategyDataYear(allStrategy[i].name, process.env.GLOBAL_YEARDATAUPDATE)
+            if (strategyData.aboutData[0][1] && strategyData.ticketData.at(-1)[0]){
+                if (newData === '') newData =strategyData.ticketData.at(-1)[0]
+                const profitNew = (parseFloat(strategyData.aboutData[0][1])).toString()
+                const newProfitData = [strategyData.ticketData.at(-1)[0], profitNew]
+                strategyData.profitData.push(newProfitData)
+                const strategyProfitNow = [allStrategy[i].name, newProfitData[0], newProfitData[1]]
+                allProfitData.push(strategyProfitNow)
+                // TODO: Сохраняем данные
+                 strategyService.saveStrategyData(strategyData)
+            }
+
+        }
+
+    }
+
+    // Получаем список портфелей  обновляем прибыли и сохраняем данные
+    const allBriefcase  = await briefcaseService.getAllBriefcase()
+    for (let i = 0; i < allBriefcase.length; i++) {
+        if (allBriefcase[i].name) {
+            const stArray = dataGetBriefcaseParam(allBriefcase[i].strategyIn)
+            const newResult = dataCalcBriefcaseProfit(stArray,allProfitData)
+            allBriefcase[i].aboutData[0][1] = newResult+' %'
+
+            // TODO: Сохраняем данные
+               briefcaseService.saveBriefcase(allBriefcase[i])
+
+
+            // Загружаем дату по портфелю и меняем в нем
+            const briefcaseData = await briefcaseService.getBriefcaseDataYear(allBriefcase[i].id, process.env.GLOBAL_YEARDATAUPDATE)
+            if (briefcaseData) {
+
+                briefcaseData.aboutData[0][1] = newResult+' %'
+                const newProfitData = [newData, newResult]
+                briefcaseData.profitData.push(newProfitData)
+
+                // TODO: Сохраняем данные
+                briefcaseService.saveBriefcaseData(briefcaseData)
+            }
+        }
+
+    }
+
+
+}
+
+
+
 module.exports = {
-    getName,rounded2,dataCalcStrategyDataParam, calcNewProfitData, addNewDeal,setNewPoints,checkDeal
+    getName,rounded2,dataCalcStrategyDataParam, calcNewProfitData, addNewDeal,setNewPoints,checkDeal, updateProfitData
 }

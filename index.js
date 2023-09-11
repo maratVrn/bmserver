@@ -5,10 +5,17 @@ const sequelize = require('./db')
 const models = require('./models/models')
 const cookieParser = require('cookie-parser')
 const router = require('./router/index')
+const cron = require("node-cron");       // Для выполнения задачи по расписанию
+const {updateProfitData} = require("./servise/signal-service");
 const errorMiddleware = require('./exceptions/error-middleware')
 
 const PORT = process.env.PORT ||  5000;
 const app = express()
+
+// Запускаем функцию перерасчета портфелей
+cron.schedule("0 9 * * 2-6", function() {
+    updateProfitData()
+});
 
 app.use(express.json({limit: '10mb'}));
 app.use(cookieParser());
