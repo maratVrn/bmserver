@@ -201,6 +201,7 @@ function dataCalcBriefcaseProfit (stArray, strategyProfit) {
 
         }
     }
+    crProfit = rounded2(crProfit)
     return crProfit
 }
 
