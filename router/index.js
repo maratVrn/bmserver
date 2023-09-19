@@ -59,6 +59,7 @@ router.post('/addPriseData', signalController.addPriseData)
 router.get('/getEndInfo/:link', signalController.getEndInfo)
 
 router.post('/telmess', signalController.testMessageTelegram)
+router.post('/sendtelquestion', signalController.sendTelegramQuestion)
 
 
 

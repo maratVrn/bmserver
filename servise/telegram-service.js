@@ -1,5 +1,7 @@
 // Отправим в общую телеграмм группу новую сделку
 
+const http = require("request");
+
 function t_sendAllNewDeal (newDeal, strategyName) {
     let http = require('request')
     try {
@@ -33,6 +35,27 @@ function t_sendAllNewDeal (newDeal, strategyName) {
     }
 }
 
+// Отправляем вопрос с сайта в телеграм админа
+function t_sendTelegramQuestion (message, email) {
+    let http = require('request')
+    try {
+        let msg = ' Сообщение от пользователя: '+'\n\n';
+        msg += email + '  \n\n';
+        msg += message
+
+        msg = encodeURI(msg)
+
+        http.post(`https://api.telegram.org/bot${process.env.TELAPI_TOKEN}/sendMessage?chat_id=${process.env.TEL_CHART_ID}&parse_mode=html&text=${msg}`,
+            function (error, response, body) {  });
+
+
+
+    } catch (e) {
+        console.log('Ошибка отправки сигнала в телеграм');
+        console.log(e);
+    }
+}
+
 module.exports = {
-    t_sendAllNewDeal
+    t_sendAllNewDeal, t_sendTelegramQuestion
 }

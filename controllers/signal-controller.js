@@ -1,7 +1,7 @@
  const {getName, checkDeal, dataCalcStrategyDataParam, calcNewProfitData, addNewDeal, setNewPoints, rounded2, updateProfitData} = require("../servise/signal-service");
  const  strategyService = require('../servise/strategy-service')
  const {saveDealLog, savePriseLog} = require("../servise/log");
- const {t_sendAllNewDeal} = require("../servise/telegram-service")
+ const {t_sendAllNewDeal, t_sendTelegramQuestion} = require("../servise/telegram-service")
 
 
 
@@ -111,6 +111,24 @@ class SignalController{
             next(e)
         }
     }
+
+
+
+    async sendTelegramQuestion (req, res, next) {
+        try {
+            if (req.body.message && req.body.email) {
+
+                t_sendTelegramQuestion(req.body.message, req.body.email )
+            }
+            return res.json('isOk')
+        } catch (e) {
+            res.json('error')
+            next(e)
+        }
+
+    }
+
+
     async testMessageTelegram (req, res, next) {
         let http = require('request')
         try {
