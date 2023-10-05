@@ -157,6 +157,39 @@ class UserService {
         return users
     }
 
+    async getUserInfoByChatID(chatId) {
+        const chatIdStr = String(chatId)
+        let res = null
+        const user = await  Users.findOne( {where: {role:chatIdStr}} )
+
+        if (user){
+            res = 'Вы зарегистрированы на сайте www.bm-algoritmik.ru'+'\n'
+            res += 'Ваш email: '+'\n'
+            res += user.email +'\n'
+            res += 'Подписка на получение торговых сигналов: НЕТ '+'\n'
+        }
+        return res
+    }
+
+    async connectClient(chatId, email) {
+        const chatIdStr = String(chatId)
+        let res = null
+        const user = await  Users.findOne( {where: {email:email}} )
+
+        if (user){
+            user.role = chatIdStr
+            await user.save().then(()=>{
+                res = 'Вы зарегегестрирвоаны на  сайте www.bm-algoritmik.ru'+'\n'
+                res += 'Ваш имя: '+'\n'
+                res += user.name +'\n'
+            })
+
+            // res += 'Подписка на получение торговых сигналов: НЕТ '+'\n'
+        }
+        return res
+    }
+
+
 }
 
 module.exports = new UserService()

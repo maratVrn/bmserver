@@ -1,6 +1,19 @@
 // Отправим в общую телеграмм группу новую сделку
 
-const http = require("request");
+const userService = require('./user-service')
+const TelegramApi = require('node-telegram-bot-api')
+const signalBot = new TelegramApi(process.env.TELAPI_BOT_TOKEN, {polling: true})
+
+// Настройки команд телеграм бота
+signalBot.setMyCommands([
+    {command: '/start', description: 'Общая информация о боте bm-algoritmik '},
+    {command: '/about', description: 'Информация о пользователе'},
+    {command: '/connect', description: 'Привязать к аккаунту сайта'},
+    {command: '/signals', description: 'Мои торговые сигналы'},
+    ]
+)
+const usersToConnect = []
+
 
 function t_sendAllNewDeal (newDeal, strategyName) {
     let http = require('request')
@@ -55,7 +68,155 @@ function t_sendTelegramQuestion (message, email) {
         console.log(e);
     }
 }
+function checkIfEmailInString(text) {
+    var re = /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/;
+    return re.test(text);
+}
+
+function deleteChatIdFromUsersToConnect(chatId){
+    const idx = usersToConnect.findIndex(k => k === chatId)
+    if (idx > -1) {
+        usersToConnect.splice(idx,1)
+    }
+}
+
+function signalBot_ON (msg) {
+    try {
+        const text = msg.text
+        const chatId = msg.chat.id
+        if (text === 'хочу сигналы') {
+            signalBot.sendMessage(chatId, `хрен тебе, сначала денег заплати`)
+        }
+
+        if (text === 'как заработать денег') {
+            signalBot.sendSticker(chatId, 'https://tlgrm.ru/_/stickers/5f4/4e6/5f44e699-2d40-4836-a9ea-24b7d6f68476/7.jpg')
+        }
+
+        if (text === '/start') {
+            deleteChatIdFromUsersToConnect(chatId)
+             signalBot.sendMessage(chatId, 'Добро пожаловать в телеграм бот Онлайн сигналов инвестиционных стратегий от BM Algoritmik' +'\n'
+                 + `Сигналы бота доступны только пользователям зарегистрированным на сайте https://bm-algoritmik.ru/ и оплатившим подписку на получение сигналов`+'\n'
+                 + `Если вы не зарегистрированы на сайте то советуем изучить обучающую информацию на сайте и зарегистрироваться`+'\n')
+
+        }
+        if (text === '/about') {
+            deleteChatIdFromUsersToConnect(chatId)
+            getClientInfo(chatId)
+        }
+        if (text === '/signals') {
+            deleteChatIdFromUsersToConnect(chatId)
+            signalBot.sendMessage(chatId, 'тут будет список ваших сигналов')
+        }
+
+
+        if (usersToConnect.findIndex(k => k === chatId) > -1) {
+            if (checkIfEmailInString(text)) {
+
+                connectClient(chatId, text)
+            } else signalBot.sendMessage(chatId, 'Ошибка в написании емайл')
+        }
+
+        if (text === '/connect') {
+            signalBot.sendMessage(chatId, 'Чтобы привязать бот к аккаунут сайта BM Algoritmik введите e-mail который вы указали при регистрации')
+            if (usersToConnect.findIndex(k => k === chatId) === -1) usersToConnect.push(chatId)
+        }
+
+
+
+    }catch (e) {
+        console.log('Ошибка отправки сигнала в телеграм');
+        console.log(e);
+    }
+}
+
+async function getClientInfo (chatId) {
+    const res = await userService.getUserInfoByChatID(chatId)
+    // const res = await userService.getUserInfoByChatID('ADMIN')
+    if (res) {signalBot.sendMessage(chatId, String(res))}
+        else signalBot.sendMessage(chatId, 'Пользователь не найден. Вам необходимо привязать телеграм к аккаунту сайта www.bm-algoritmik.ru с использованием e-mail')
+}
+
+async function connectClient (chatId, email) {
+    const res = await userService.connectClient(chatId, email)
+    // const res = await userService.getUserInfoByChatID('ADMIN')
+    if (res) {
+        signalBot.sendMessage(chatId, String(res))
+        deleteChatIdFromUsersToConnect(chatId)
+    }
+    else signalBot.sendMessage(chatId, 'Пользователь c таким email на сайте www.bm-algoritmik.ru не найден, введите другой email')
+}
+
+function  getSendPul(pul,maxMes) {
+    res = []
+    let needMes = maxMes
+    if (pul.length<maxMes) needMes = pul.length
+    res = pul.slice(0, needMes)
+    console.log('Получили массив '+res);
+
+    pul.splice(0,needMes)
+    console.log('Остался'+pul);
+
+
+
+    return res
+}
+
+
+// Для теста
+async function testBotf () {
+    // собираем сообщения в пул
+    const pul = []
+    const maxMes = 20
+    const timeDelay = 5 * 1000
+    let timerId = -1
+    for (let i = 0; i < 120; i++) {
+       pul.push(i.toString())
+    }
+
+    if (pul.length>0) {
+        // Запускаем таймер
+        timerId = setInterval(
+            () => {
+                const sendPul = getSendPul(pul,maxMes)
+                signalBot.sendMessage('752332479', 'Таймер сработал')
+                for (let i = 0; i < sendPul.length; i++) {
+                     try {
+                         // console.log(await signalBot.sendMessage('752332479', sendPul[i]))
+                         signalBot.sendMessage('752332479', sendPul[i]) } catch (e) {
+                         pul.push(sendPul[i])
+                         console.log('добавили '+ sendPul[i])
+                     }
+                }
+
+                if (pul.length === 0) {
+                    signalBot.sendMessage('752332479', 'Останавливаем таймер')
+                    clearInterval(timerId)
+                }
+
+            },  timeDelay );
+
+    }
+
+    //
+    // const users = await userService.getAllUsers()
+    // if (users){
+    //     users.map(user => {
+    //         console.log(user.role);
+    //         // try {signalBot.sendMessage(user.role, 'хай')} catch (e) {console.log(e)}
+    //         try {signalBot.sendMessage('752332479', 'хай')} catch (e) {console.log(e)}
+    //
+    //     })
+    // }
+
+
+
+
+    //signalBot.sendMessage('752332479', 'Добро пожаловать в телеграм бот Онлайн сигналов инвестиционных стратегий от BM Algoritmik. Сигналы бота доступны только пользователям зарегистрированным на сайте www.bm-algoritmik.ru. Если вы не зарегистрированы на сайте www.bm-algoritmik.ru советуем изучить обучающую информацию на сайте и зарегистрироваться')
+        // + `Сигналы бота доступны только пользователям зарегистрированным на сайте www.bm-algoritmik.ru`+'\n'
+        // + `Если вы не зарегистрированы на сайте www.bm-algoritmik.ru советуем изучить обучающую информацию на сайте и зарегистрироваться`+'\n')
+
+}
 
 module.exports = {
-    t_sendAllNewDeal, t_sendTelegramQuestion
+    t_sendAllNewDeal, t_sendTelegramQuestion, signalBot_ON, signalBot, testBotf
 }

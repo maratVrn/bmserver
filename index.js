@@ -8,9 +8,12 @@ const router = require('./router/index')
 const cron = require("node-cron");       // Для выполнения задачи по расписанию
 const {updateProfitData} = require("./servise/signal-service");
 const errorMiddleware = require('./exceptions/error-middleware')
+const  {signalBot_ON, signalBot} = require("./servise/telegram-service")
 
 const PORT = process.env.PORT ||  5000;
 const app = express()
+
+
 
 // Запускаем функцию перерасчета портфелей
 cron.schedule("0 9 * * 2-6", function() {
@@ -49,6 +52,11 @@ const start = async () => {
         await sequelize.authenticate()
         await sequelize.sync()
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
+        // Запускаем телеграм бота
+        signalBot.on('message', async msg => {
+            await signalBot_ON(msg)
+
+        })
 
     } catch (e) {
         console.log(e)
