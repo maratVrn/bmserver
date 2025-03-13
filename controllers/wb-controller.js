@@ -143,7 +143,7 @@ class WbController{
 
             // const testResult  = await ProductListService.deleteZeroProductListTable()
 
-
+ 
 
             const testResult  = await TaskService.loadAllNewProductList(false, 50)
             // const testResult  = await wbService.getWBCatalog_fromWB()

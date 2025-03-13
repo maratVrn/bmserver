@@ -77,7 +77,7 @@ class TaskService{
 
                 console.log(taskData[i].tableName);
                 const [updateResult,updateCount]  = await ProductListService.updateAllWBProductListInfo_fromTable2(taskData[i].tableName)
-
+ 
                 saveParserFuncLog('taskService ', '  --- Обновляем таблицу  '+taskData[i].tableName+'  кол-во '+updateCount)
 
                 if (updateCount > 0){
