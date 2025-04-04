@@ -4,27 +4,8 @@ const {saveParserProductListLog, saveErrorLog} = require('../servise/log')
 const {DataTypes} = require("sequelize");
 
 
-// global.axiosProxy  = { host: '45.89.102.146', port: 8000,  protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } }
-// global.axiosProxy  ={ host: '185.166.163.180', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-global.axiosProxy  ={ host: '46.8.111.94', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-global.axiosProxy2  ={ host: '45.88.149.19', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-// РАБОТА С ПРОКСИ ЛИСТОМ
-// const proxy = { host: '109.248.142.166', port: 8000,  protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-//      const proxy = { host: '45.89.102.146', port: 8000,  protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-// const proxy = { host: '185.166.163.180', port: 8000, protocol: 'https', auth: { username: 'OmzRbS', password: '9blCjmBKmH' } };
-// Проверка прокси - смотрим какой ip возрвщается в запросе
-// await axios.get('https://httpbin.io/ip', {
-//     proxy: proxy,
-// })
-//     .then((response) => {
-//         // log the response data
-//         console.log(response.data);
-//     })
-//     .catch((error) => {
-//         // log request error if any
-//         console.error('Error:', error);
-//     });
-//
+global.axiosProxy  ={ host: '46.8.111.94', port: 8000, protocol: 'https', auth: { username: 'OmzRbS1', password: 'OmzRbS123' } };
+global.axiosProxy2  ={ host: '45.88.149.19', port: 8000, protocol: 'https', auth: { username: 'OmzRbS1', password: 'OmzRbS123' } };
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 

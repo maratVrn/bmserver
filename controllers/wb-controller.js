@@ -116,39 +116,14 @@ class WbController{
 
             // const testResult  = await wbService.getWBSubjects_fromWB()
 
-
-            // const testResult  = await wbService.getGlobalProductListInfo_fromWB()
             // const testResult  = await ProductListService.deleteAllProductListTable()
-
-            // const testResult  = await ProductIdService.setNewProductIdListArray(271,300)
-
-
-            // const testResult  = await ProductListService.loadNoMinQuantityWBProductListInfo_fromIdTable(283, 283, false)
-            // const testResult  = await ProductListService.loadNewWBProductListInfo_fromIdTable(260,281)
-
             // const testResult  = await ProductListService.test()
-            // const testResult  = await ProductListService.migrationALLToNewTableName()
-            // const testResult  = await wbService.getWBSubjects_fromWB() ************
             // const testResult  = await ProductListService.getAllProductListInfo()
-            // const testResult  = await ProductListService.updateAllWBProductListInfo_fromTable('productList200')
-
-
-            // const testResult  = await ProductIdService.deleteAllProductIDListTable(1)
-            // const testResult  = await ProductListService.deleteAllProductListTable()
-            // const testResult  = await ProductListService.updateAllWBProductListInfo_fromTable2('productList130803')
-
-            // const testResult  = await TaskService.controlAllProductList()
-            // const testResult  = await ProductIdService.setNewProductIdListArray(4,290)
-            //  const testResult  = await TaskService.updateAllProductList()
-
             // const testResult  = await ProductListService.deleteZeroProductListTable()
 
- 
-
-            const testResult  = await TaskService.loadAllNewProductList(false, 50)
+            const testResult  = await TaskService.loadAllNewProductList(false, 30)
             // const testResult  = await wbService.getWBCatalog_fromWB()
             // const testResult  = await ProductListService.migrationALLToNewTableName()
-            // const testResult  = await wbService.getWBCatalog_fromWB()
             // const testResult  = await wbService.saveCatalogDataToFile()
  
 
@@ -160,6 +135,16 @@ class WbController{
             next(e)
         }
 
+    }
+
+    // НУЖНО!! УДАЛЯЕМ ДУБЛИКАТЫ одинаковых товаров в разных каталонах
+    async deleteDuplicateID (req, res, next) {
+        try {
+            const result = await ProductListService.deleteDuplicateID()
+            // const result = await ProductListService.getAllProductListInfo()
+
+            res.json(result)
+        } catch (e) {   console.log(e);   next(e)}
     }
 
     async uploadNewWordStatisticData(req, res, next) {
