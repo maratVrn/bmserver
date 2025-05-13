@@ -5,9 +5,7 @@
 const sequelize = require("../db");
 const {DataTypes, Op, where} = require("sequelize");
 const ProductListService = require('../servise/productList-service')
-const ProductIdService= require('../servise/productId-service')
 const WBService= require('../servise/wb-service')
-const {WBCatalog} = require("../models/models");
 const {saveErrorLog, saveParserFuncLog} = require("./log");
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -26,13 +24,13 @@ class TaskService{
 
 
     // Провеяем соотвествие всех товаров в продукт лист - и информацию в таблицах ИД. Если товара нет в ИД таблице ставим там catalogId = -1
-    // TODO: переписать в чекдубликате
-    async controlAllProductList (){
-        const taskName = 'controlAllProductList'
-        let needTask = {}
 
+    async deleteDuplicateID (){
+        const taskName = 'deleteDuplicate'
+        let needTask = {}
+        let allDuplicateCount = 0
         // Сначала разберемся с задачей - продолжать ли старую или создать новую
-        saveParserFuncLog('taskService ', '  ----------  Запускаем задачу controlAllProductList -------')
+        saveParserFuncLog('taskService ', '  ----------  Запускаем задачу deleteDuplicateID -------')
         try {
 
             const allNoEndTask = await this.AllTask.findAll({
@@ -53,12 +51,11 @@ class TaskService{
                 needTask = allNoEndTask[0]
                 saveParserFuncLog('taskService ', '  --- Нашли НЕ завершенную задачу с ID '+needTask.id)
             } else {
-                const allProductIdTableName = await ProductIdService.getAllProductIDTableName()
-                for (let i in allProductIdTableName) {
+                const allProductListTableName = await ProductListService.getAllProductListTableName()
+                for (let i in allProductListTableName) {
                     const oneTaskData = {
-                        tableName: allProductIdTableName[i],
+                        tableName: allProductListTableName[i],
                         tableTaskEnd: false,
-                        tableTaskResult: ''
                     }
                     currTask.taskData.push(oneTaskData)
                 }
@@ -68,7 +65,7 @@ class TaskService{
 
             }
 
-        } catch (error) { saveErrorLog('taskService',`Ошибка в controlAllProductList при определении задачи новая или продолжаем `)
+        } catch (error) { saveErrorLog('taskService',`Ошибка в deleteDuplicateID при определении задачи новая или продолжаем `)
             saveErrorLog('taskService', error)}
 
         // Далее запустим процедуру  обновления по списку задач
@@ -76,32 +73,32 @@ class TaskService{
         for (let i in taskData){
 
             if (!taskData[i].tableTaskEnd) try {
-
                 console.log(taskData[i].tableName);
-                const nameIdx =parseInt(taskData[i].tableName.replace('wb_productIdList', ''))
+                const duplicateCount = await ProductListService.deleteDuplicateID(taskData[i].tableName)
+                saveParserFuncLog('taskService ', '  --- Проверили таблицу № '+i+'  '+taskData[i].tableName)
 
-                // const resultCount  = await ProductListService.controlDataInProductIdList(nameIdx)
+                allDuplicateCount += duplicateCount
+                saveParserFuncLog('taskService ', '----- Удалено дубликатов = '+duplicateCount +'  нарастающим итогом = '+allDuplicateCount)
 
-                saveParserFuncLog('taskService ', '  --- Проверили таблицу  '+taskData[i].tableName+' нашли неспользуемые ИД кол-во '+resultCount)
-                console.log(' нашли неспользуемые ИД кол-во ' + resultCount);
 
-                if (resultCount > -1){
-                    taskData[i].tableTaskEnd = true
-                    taskData[i].tableTaskResult = resultCount
-                    await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
-                }
-                if (i>-1) break
-                // await delay(0.1 * 60 * 1000)
+                taskData[i].tableTaskEnd = true
+                taskData[i].tableTaskResult = allDuplicateCount
+                await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
+
+
+                // if (i>2) break // TODO: отладка
+                await delay(0.02 * 60 * 1000)
+
             } catch(error) {
-                saveErrorLog('taskService',`Ошибка в controlAllProductList при обновлении таблицы `+taskData[i].tableName)
+                saveErrorLog('taskService',`Ошибка в deleteDuplicateID при обновлении таблицы `+taskData[i].tableName)
                 saveErrorLog('taskService', error)
             }
-
         }
         // await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
 
-        console.log('controlAllProductList isOk');
+        console.log('deleteDuplicateID isOk');
         saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
+        saveParserFuncLog('taskService ', ' Всего удалено дубликатов '+allDuplicateCount)
     }
 
     // НУЖНА БАЗОВАЯ ФУНКЦИЯ загружаем товары с вб ИЛИ обновляем если появились новые
@@ -155,13 +152,13 @@ class TaskService{
         for (let i in taskData){
             if (!taskData[i].tableTaskEnd) try {
 
-                const resCount  = await WBService.getProductList_fromWB(taskData[i].cParam.catalogParam, taskData[i].cParam.id,onlyNew, pageCount)
-                allAddCount += resCount
-                saveParserFuncLog('taskService ', '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+'  кол-во '+resCount+
-                    '  shard:'+taskData[i].cParam.catalogParam.shard+'  query:'+taskData[i].cParam.catalogParam.query+'  resCount = '+resCount)
-
+                const [realNewProductCount, duplicateProductCount]  = await WBService.getProductList_fromWB(taskData[i].cParam.catalogParam, taskData[i].cParam.id,onlyNew, pageCount)
+                allAddCount += realNewProductCount
+                saveParserFuncLog('taskService ', '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+'  кол-во новых '+realNewProductCount+
+                    '  shard:'+taskData[i].cParam.catalogParam.shard+'  query:'+taskData[i].cParam.catalogParam.query+'  перенесеено дубликатов  = '+duplicateProductCount)
+ 
                 taskData[i].tableTaskEnd = true
-                taskData[i].tableTaskResult = resCount.toString()
+                taskData[i].tableTaskResult = realNewProductCount.toString()
                 await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
 
 
@@ -170,10 +167,10 @@ class TaskService{
             } catch(error) {
                 saveErrorLog('taskService',`Ошибка в loadAllNewProductList при обновлении таблицы `+taskData[i].tableName)
                 saveErrorLog('taskService', error)
-            }
+            } 
 
 
-
+ 
         }
        if (allTableIsUpdate) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
 

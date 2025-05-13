@@ -27,18 +27,18 @@ class WbController{
 
     }
 
-    async updateProductList_fromWB (req, res, next) {
-
-        try {
-            const catalogId = req.query.catalogID ? parseInt(req.query.catalogID) : 0
-            const productList  = await wbService.updateProductList_fromWB(catalogId)
-            res.json(productList)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-
-    }
+    // async updateProductList_fromWB (req, res, next) {
+    //
+    //     try {
+    //         const catalogId = req.query.catalogID ? parseInt(req.query.catalogID) : 0
+    //         const productList  = await wbService.updateProductList_fromWB(catalogId)
+    //         res.json(productList)
+    //     } catch (e) {
+    //         console.log(e);
+    //         next(e)
+    //     }
+    //
+    // }
 
     async getBrandsAndSubjects_fromWB (req, res, next) {
 
@@ -118,14 +118,14 @@ class WbController{
 
             // const testResult  = await ProductListService.deleteAllProductListTable()
             // const testResult  = await ProductListService.test()
-            // const testResult  = await ProductListService.getAllProductListInfo()
+            // const testResult  = await ProductListService.getAllProductCount()
             // const testResult  = await ProductListService.deleteZeroProductListTable()
 
-            const testResult  = await TaskService.loadAllNewProductList(false, 30)
+            const testResult  = await TaskService.loadAllNewProductList(false, 20)
             // const testResult  = await wbService.getWBCatalog_fromWB()
             // const testResult  = await ProductListService.migrationALLToNewTableName()
             // const testResult  = await wbService.saveCatalogDataToFile()
- 
+
 
             // const testResult  = 'isOk'
             console.log('testResult = '+testResult);
@@ -140,8 +140,10 @@ class WbController{
     // НУЖНО!! УДАЛЯЕМ ДУБЛИКАТЫ одинаковых товаров в разных каталонах
     async deleteDuplicateID (req, res, next) {
         try {
-            const result = await ProductListService.deleteDuplicateID()
-            // const result = await ProductListService.getAllProductListInfo()
+            console.log('tt');
+            const result = await TaskService.deleteDuplicateID()
+            // const result = await ProductListService.deleteDuplicateID()
+
 
             res.json(result)
         } catch (e) {   console.log(e);   next(e)}

@@ -2,7 +2,7 @@
 const sequelize = require("../db");
 const {DataTypes, Op} = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require('../servise/log')
-const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo} = require("../wbdata/wbParserFunctions");
+const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo, PARSER_GetProductList_SubjectsID_ToDuplicate} = require("../wbdata/wbParserFunctions");
 const ProductIdService= require('../servise/productId-service')
 
 
@@ -82,8 +82,17 @@ class ProductListService {
 
             const isTable = await this.checkTableName(tableName)
             if (isTable) {
+
                 const startCount = await this.WBCatalogProductList.count()
-                await this.WBCatalogProductList.bulkCreate(newProductList, {ignoreDuplicates: true})
+                try {
+                    await this.WBCatalogProductList.bulkCreate(newProductList, {
+                        updateOnDuplicate: ["maxPrice", "price", "reviewRating", "brandId",
+                            "saleCount", "saleMoney", "totalQuantity", "priceHistory", "subjectId"],
+                    })
+                } catch (e) {console.log(e)
+                    saveErrorLog('productListService', e)
+                }
+
                 const endCount = await this.WBCatalogProductList.count()
                 resCount = endCount-startCount
             }
@@ -244,7 +253,8 @@ class ProductListService {
 
                         this.WBCatalogProductList.tableName = tableName.toString()
                         const count = await this.WBCatalogProductList.count()
-
+                        saveParserFuncLog('listServiceInfo ', tableName+ ' count '+ count)
+                        console.log(tableName+ ' count '+ count);
                         allCount += count
                     }
                 }
@@ -387,67 +397,197 @@ class ProductListService {
 
 
     // НУЖНА  удаляем дубликаты в разных каталог ИД
-    async deleteDuplicateID() {
-        console.log('sss');
+    async deleteDuplicateID(tableName) {
         let allIdToDeleteCount = 0
-        const allTablesName = await sequelize.getQueryInterface().showAllTables()
-        if (allTablesName)
-            for (let i = 0; i < allTablesName.length; i ++)
-            {
-                try {
-                    const tableName = allTablesName[i]
-                    if (tableName.toString().includes('productList') && !tableName.toString().includes('all')) {
-
-                        this.WBCatalogProductList.tableName = tableName
-
-                        const endId = await this.WBCatalogProductList.count()-1
-                        console.log(i + '  ' + tableName);
-
-                        let allIdToDelete = []
-                        const step = 300_000
-                        for (let j = 0; j <= endId; j++) {
-
-                            const currProductList = await this.WBCatalogProductList.findAll({
-                                offset: j,  limit: step,  order: [['id']]})
-                            console.log('Загрузили '+currProductList.length );
-
-                            let IdList = []
-                            const tableId = parseInt(tableName.replace('productList',''))
-                            for (let k in currProductList) IdList.push(currProductList[k].id);
-                            const idToDelete = await ProductIdService.viewDuplicateID(IdList, tableId)
-                            allIdToDelete = [...allIdToDelete,...idToDelete]
-
-                            console.log('надо удалить ' + idToDelete.length);
+        let allRealToDeleteCount = 0
 
 
 
-                            j += step-1
+        try {
+            // tableName = 'productList8275' //TODO: отладка
+
+            this.WBCatalogProductList.tableName = tableName
+            const endId = await this.WBCatalogProductList.count() - 1
 
 
+            let counter = 0
+            console.log('Всего элементов' + endId);
+            const step = 10_000
+            for (let i = 0; i <= endId; i++) {
+                console.log(i);
+                this.WBCatalogProductList.tableName = tableName
+                const currProductList = await this.WBCatalogProductList.findAll({
+                    offset: i, limit: step, order: [['id']]
+                })
+                console.log('Загрузили ' + currProductList.length);
+                counter += currProductList.length
+                // 1. Сначала получим ИД-ки для которых НЕ соответсвует информация
+                const tableId = parseInt(tableName.replace('productList', ''))
+
+                const idToDelete = await ProductIdService.viewDuplicateID(currProductList, tableId)
+
+                console.log('Найдено ИД дубликатов ' + idToDelete.length);
+                // 2.  подгрузим инфу с других каталогов откуда задублировали и составим ТЗ на обработку
+                const  [productListByCatalogDeleteAnother, idToUpdate,productsToUpdateCurr] = await this.loadAddInfo(idToDelete)
+                /// Проищведем обработку полученных данных
+                const realDeleteCount = await this.doDuplicateWork(productListByCatalogDeleteAnother, idToUpdate,productsToUpdateCurr, tableName)
+                allRealToDeleteCount += realDeleteCount
+
+                allIdToDeleteCount += idToDelete.length
+                i += step - 1
+            }
+            console.log('Проработано '+ counter);
+
+            console.log('----------!!!!!!!!!!!!!!!  Всего найдено дубликатов ' + allIdToDeleteCount+ ' реально удалено '+ allRealToDeleteCount);
+
+
+        }
+         catch (e) {   console.log(e);  }
+
+
+        return allIdToDeleteCount
+    }
+
+    // Завершение работы с дубликатами
+    async doDuplicateWork(productListByCatalogDeleteAnother, idToUpdate,productsToUpdateCurr, tableName){
+
+        let idListString = ''
+
+        // 1 изменим Инфо в списке каталог ИД
+        console.log('1 изменим Инфо в списке каталог ИД');
+
+        let isAllIdToUpdate =   await ProductIdService.updateIdList(idToUpdate)
+
+
+        // 2 Обновляем историю в текущем каталоге
+        console.log('2 Обновляем историю в текущем каталоге');
+
+        let isAllProductsToUpdateCurr = true
+        try {
+            this.WBCatalogProductList.tableName = tableName
+            await this.WBCatalogProductList.bulkCreate(productsToUpdateCurr,{    updateOnDuplicate: ["priceHistory"]  })
+
+        } catch (e) { console.log(e); isAllProductsToUpdateCurr = false}
+
+        // 3 Удалим дубликаты в других таблицах
+        let isAllProductsToUpdateAnother = false
+        let realDeleteCount = 0
+        for (let key of productListByCatalogDeleteAnother.keys()) {
+            const deleteArray = productListByCatalogDeleteAnother.get(key)
+
+            const isTable = await this.checkTableName(key)
+            realDeleteCount += deleteArray.length
+
+            //
+            // saveErrorLog('deleteId', '');
+            // saveErrorLog('deleteId', 'Удаляем дубликаты из таблицы  ' + key);
+            // idListString = ''
+            // for (let j in deleteArray) idListString += deleteArray[j]+' '
+            // saveErrorLog('deleteId', idListString)
+
+            try {
+                if (isTable)
+                    await this.WBCatalogProductList.destroy({where: {id: deleteArray}})
+            } catch (e) { console.log(e); isAllProductsToUpdateAnother = false}
+
+        }
+ 
+
+
+        // saveErrorLog('deleteId', 'Обновляем историю в текущем каталоге  ' + productsToUpdateCurr.length);
+        // idListString = ''
+        // for (let j in productsToUpdateCurr) idListString += productsToUpdateCurr[j].id.toString() + ' '
+        // saveErrorLog('deleteId', idListString)
+        //
+        // saveErrorLog('deleteId', 'Всего дубликатов ' + idToUpdate.length)
+        // for (let j in idToUpdate) idListString += idToUpdate[j].id.toString() + ' '
+        // saveErrorLog('deleteId', idListString)
+
+        return realDeleteCount
+    }
+
+
+    // НУЖНА Подгружаем информцию из других каталогов для поиска и дулаения дубликатов
+    async loadAddInfo(idToDelete){
+        let idToUpdate = []
+        let productsToUpdateCurr = []
+        // Сначала создадим ассоциативный массив ключ - catalogId значение - массив всех newProductList с заданным catalogId
+        const productListByCatalogIdMap = new Map()
+        for (let i in idToDelete) {
+            idToUpdate.push({id: idToDelete[i].id, catalogId: idToDelete[i].catalogId1})
+            if (idToDelete[i].catalogId2) {
+                if (productListByCatalogIdMap.has(idToDelete[i].catalogId2)) {
+                    const crArray = productListByCatalogIdMap.get(idToDelete[i].catalogId2)
+                    productListByCatalogIdMap.set(idToDelete[i].catalogId2, [...crArray, idToDelete[i].id])
+                } else productListByCatalogIdMap.set(idToDelete[i].catalogId2, [idToDelete[i].id])
+            }
+        }
+
+        // Далее пройдемся по новому массиву и сохраним разово все элементы
+        for (let key of productListByCatalogIdMap.keys()) {
+            const isTable = await this.checkTableName(key)
+            if (isTable) {
+                const IdList = productListByCatalogIdMap.get(key)
+                const cat2Products = await this.WBCatalogProductList.findAll({ where: { id: IdList }})
+                for (let i in cat2Products)
+                    for (let j in idToDelete)
+                        if (cat2Products[i].id === idToDelete[j].id) {
+                            idToDelete[j].info2 = cat2Products[i]
+                            idToDelete[j].subjectId2 = cat2Products[i].subjectId
+                            idToDelete[j].historyCount2 = cat2Products[i].priceHistory.length
+                            if (idToDelete[j].historyCount1 < idToDelete[j].historyCount2) {
+                                productsToUpdateCurr.push({
+                                    id: parseInt(idToDelete[j].info1.id),
+                                    priceHistory : idToDelete[j].info2.priceHistory
+                                })
+                            }
+
+                            break
                         }
-                        let idListString = ''
-                        for (let j in allIdToDelete) {
-                            // IdList.push(data[j].id)
-                            idListString += allIdToDelete[j].toString()+' '
-                        }
-                        saveErrorLog('deleteId', '    ---------------------------------------------         ')
-                        saveErrorLog('deleteId', 'Список дубликатов ид в '+tableName+' всего '+ endId +' из них дубликвтов '+allIdToDelete.length)
-                        saveErrorLog('deleteId', idListString)
-                        allIdToDeleteCount += allIdToDelete.length
-                    }
-                    // if (i > 2) break
-                } catch (e) {   console.log(e);  }
-
             }
 
-        saveErrorLog('deleteId', '    ------------------------ЗАВЕШЕНО!!!---------------------         ')
-        saveErrorLog('deleteId', 'ВСЕГО надо удалить '+allIdToDeleteCount)
-        return allIdToDeleteCount
+        }
+        return [productListByCatalogIdMap, idToUpdate,productsToUpdateCurr]
+
+    }
+
+    // НУЖНА  Соберем информацию из других каталогов которые задублировались по ошибке
+    async viewNewProductsInfoToNewDuplicateProducts(mapDuplicateIdListAnother){
+        let duplicateProducts = []
+        for (let key of mapDuplicateIdListAnother.keys()) {
+            const isTable = await this.checkTableName(key)
+            if (isTable) {
+                const IdList = mapDuplicateIdListAnother.get(key)
+                // console.log('забираем дубликаты с '+key+'  колво '+IdList.length);
+                // let cStart = duplicateProducts.length
+                const cat2Products = await this.WBCatalogProductList.findAll({ where: { id: IdList }})
+                for (let i in cat2Products) {
+                    duplicateProducts.push({
+                        id: cat2Products[i].id,
+                        maxPrice: cat2Products[i].maxPrice,
+                        price: cat2Products[i].price,
+                        reviewRating: cat2Products[i].reviewRating,
+                        discount: cat2Products[i].discount,
+                        subjectId: cat2Products[i].subjectId,
+                        brandId: cat2Products[i].brandId,
+                        saleCount: cat2Products[i].saleCount,
+                        saleMoney: cat2Products[i].saleMoney,
+                        totalQuantity: cat2Products[i].totalQuantity,
+                        priceHistory: cat2Products[i].priceHistory
+
+                    })
+                }
+                // cStart = duplicateProducts.length - cStart
+                // console.log('Добавили дубликатов '+cStart);
+                await this.WBCatalogProductList.destroy({where: {id: IdList}})
+            }
+        }
+        return duplicateProducts
     }
 
 
 
-
 }
+
 
 module.exports = new ProductListService()

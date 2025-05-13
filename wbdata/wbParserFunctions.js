@@ -1,6 +1,6 @@
 const axios = require('axios-https-proxy-fix');
 const {saveParserProductListLog, saveErrorLog} = require('../servise/log')
-// const {saveProductLIstInfoToCVS} = require('../wbdata/wbfunk')
+
 const {DataTypes} = require("sequelize");
 
 
@@ -24,7 +24,7 @@ function getWBCatalogDataFromJsonReq(data){
                 }
             }
             const priceHistory_tmp = []
-            priceHistory_tmp.push({d: dt, sp: price, q: data[key].totalQuantity, sq: 0})
+            priceHistory_tmp.push({d: dt, sp: price, q: data[key].totalQuantity})
 
             let jsonData = {
 
@@ -116,8 +116,6 @@ async function PARSER_GetProductList(catalogParam, subjectList, onlyNew = false,
             productListParserResult = [...productListParserResult, ...currProductList]
 
             if (subjectList[i].count > 10000) {
-                const currProductList2 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'popular', pageCount)
-                productListParserResult = [...productListParserResult, ...currProductList2]
                 const currProductList3 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'rate', pageCount)
                 productListParserResult = [...productListParserResult, ...currProductList3]
                 const currProductList4 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'priceup', pageCount)
@@ -315,35 +313,69 @@ async function PARSER_GetProductListInfoAll_fromIdArray(need_ProductIDInfo) {
     }
     return productListInfoAll
 }
-// Обновляем информацию про товары по списку ИД и получаем детальную инфу если такой товар был
-async function PARSER_UpdateProductListInfoAll_fromIdArray(need_ProductIDInfo) {
-
-    let productListInfoAll = [] // Результ список всех найденных товаров
-
-    const endId   = need_ProductIDInfo.length-1
-
-    const step = 500 //process.env.PARSER_MAX_QUANTITY_SEARCH
-    for (let i = 0; i <= endId; i++) {
 
 
-        let productList = []
-        let currEnd = i + step-1 > endId ? endId : i + step-1
-        for (let k = i; k <= currEnd; k++)
-            productList.push(need_ProductIDInfo[k])
-        console.log('i = '+i+'  --  Запросили = '+productList.length);
-        const productListInfo = await PARSER_GetProductListInfo(productList)
-        productListInfoAll = [...productListInfoAll,...productListInfo]
-        i += step-1
+// УЖЕ НУЖНАЖ Собираем информацию по предметам какие реально SubjectsID сейчас
+async function PARSER_GetProductList_SubjectsID_ToDuplicate(productIdList) {
 
-
-        // TODO: Отладка
-        // if (i>2300) break
+    let productListInfo = []
+    let needGetData = true
+    let productListStr = ''
+    for (let i in productIdList) {
+        if (i>0) productListStr += ';'
+        productListStr += parseInt(productIdList[i]).toString()
     }
-    return productListInfoAll
+    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+        try {
+            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
+            await axios.get(url, {proxy: global.axiosProxy}).then(response => {
+                const resData = response.data
+
+                if (resData.data) {
+                    console.log('-------------------->   '+resData.data.products.length);
+                    for (let i in resData.data.products){
+                        const currProduct = resData.data.products[i]
+                        const newProduct = {
+                            id              : currProduct?.id ? currProduct.id : 0,
+                            subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
+                        }
+                        productListInfo.push(newProduct)
+
+                    }
+
+
+                }})
+            needGetData = false
+        } catch (err) {
+            needGetData = false
+            if ((err.response?.status ) && (err.response?.statusText)) saveErrorLog('PARSER_GetProductListInfo', 'Ошибка '+err.response?.status+err.response?.statusText)
+            // console.log(err);
+            console.log(' ---------  error  -------');
+            console.log(err.code);
+
+            if (err.code === 'ECONNRESET') {
+                saveErrorLog('PARSER_GetProductListInfo', 'Словили ECONNRESET')
+                await delay(50);
+                needGetData = true
+            }
+
+            if ((err.status === 429) || (err.response?.status === 429)) {
+                saveErrorLog('PARSER_GetProductListInfo', 'Частое подключение к серверу')
+                await delay(50);
+                needGetData = true
+            }
+
+        }
+    }
+
+
+
+
+
+    return productListInfo
 }
 
 async function PARSER_GetProductListInfo(productIdList) {
-
 
     let productListInfo = []
     let needGetData = true
@@ -564,5 +596,5 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
 
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetBrandsAndSubjectsList, PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray,
-    PARSER_GetProductListInfoToClient, PARSER_GetIDInfo, PARSER_GetProductList
+    PARSER_GetProductListInfoToClient, PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductList_SubjectsID_ToDuplicate
 }

@@ -1,5 +1,5 @@
 const fs = require("fs");
-const noIdCatalogInclude = [1111, 1234, 1235, 131289, 2192,62813]
+const noIdCatalogInclude = [1111, 1234, 1235, 131289, 2192,62813, 1237]
 
 async function saveProductLIstInfoToCVS(productList,productListInfo ){
 

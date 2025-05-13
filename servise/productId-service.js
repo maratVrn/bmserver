@@ -24,12 +24,16 @@ class ProductIdService {
             console.log('countStart = '+countStart);
             this.WBProductIdTable.tableName ='wb_productIdListAll'
             await this.WBProductIdTable.sync({ alter: true })
-            await this.WBProductIdTable.bulkCreate(idData,{    ignoreDuplicates: true   })
+
+            await this.WBProductIdTable.bulkCreate(idData,{    updateOnDuplicate: ["catalogId"]   })
             const countEnd = await this.WBProductIdTable.count()
             console.log('countEnd = '+countEnd);
             resCount = countEnd - countStart
+            console.log('resCountID = '+resCount);
+
         }   catch (err) {
             console.log(err);
+            saveErrorLog('productListService', err)
         }
 
         return resCount
@@ -62,16 +66,147 @@ class ProductIdService {
         return allProductIDTableName
     }
 
-    // НУЖНО  удаляем дубликаты в разных каталогах
-    async viewDuplicateID (idList, tableId){
+    // НУЖНО  обновляем данные каталог ИЛ
+    async updateIdList (IdList) {
+        let isAllIdToUpdate = true
+        try {
+            this.WBProductIdTable.tableName = 'wb_productIdListAll'
+            await this.WBProductIdTable.bulkCreate(IdList,{    updateOnDuplicate: ["catalogId"]  })
+        } catch (e) { console.log(e); isAllIdToUpdate = false}
+
+        return isAllIdToUpdate
+    }
+
+    // НУЖНО!!! для загрузки новых карточек товаров Проверяем по загруженному списку есть ли эти данные в каталоге
+    async viewNewProductsInfo(productListParserResult,catalogId){
+        let IdList = []
+        let realNewProduct = []
+        let currDuplicateIdList = []
+        let mapDuplicateIdListAnother = new Map()
+        for (let k in productListParserResult) IdList.push(productListParserResult[k].id);
+
         this.WBProductIdTable.tableName ='wb_productIdListAll'
         await this.WBProductIdTable.sync({ alter: true })
-        const needId = await this.WBProductIdTable.findAll({ where: { id: idList }})
-        let idToDelete = []
-        for (let i in needId)
-            if (needId[i].catalogId !== tableId) idToDelete.push(needId[i].id)
+        const needId = await this.WBProductIdTable.findAll({ where: { id: IdList}})
+        console.log('Из них в базе есть '+needId.length);
+        catalogId = parseInt(catalogId)
+        let counter = 0
+        let counter2 = 0
 
-        return idToDelete
+        for (let i in productListParserResult) {
+            let isRealNewProduct = true
+            for (let j in needId) {
+                let needBreak = false
+                if (productListParserResult[i].id === needId[j].id) {
+
+                    //  Если есть дубликат в другом каталоге
+                    if (catalogId !== needId[j].catalogId) {
+                        if (mapDuplicateIdListAnother.has(needId[j].catalogId)) {
+                            const crArray = mapDuplicateIdListAnother.get(needId[j].catalogId)
+                            mapDuplicateIdListAnother.set(needId[j].catalogId, [...crArray, needId[j].id])
+                        } else mapDuplicateIdListAnother.set(needId[j].catalogId, [needId[j].id])
+
+                        isRealNewProduct = false
+                        needBreak = true
+                        counter++
+                    }
+                    // Если уже есть в каталоге то добавлять не надо
+                    if (catalogId === needId[j].catalogId) {
+                        currDuplicateIdList.push(needId[j].id)
+                        isRealNewProduct = false
+                        needBreak = true
+                        counter2++
+                    }
+                }
+                if (needBreak) break
+
+            }
+            if (isRealNewProduct) {
+                let needAdd = true
+                for (let k in realNewProduct)
+                    if (realNewProduct[k].id === productListParserResult[i].id) {
+                        needAdd = false
+                        break
+                    }
+                if (needAdd) realNewProduct.push(productListParserResult[i])
+            }
+        }
+
+
+
+        console.log('Всего Товаров '+productListParserResult.length);
+        console.log('В таекущем каталоге уже есть '+counter2);
+        console.log('Всего дубликатов '+counter);
+        console.log('Сохраняем новые '+realNewProduct.length);
+
+        // let idListString = ''
+        // saveErrorLog('deleteId', 'Новые ID в каталоге ' + catalogId);
+        // for (let j in realNewProduct) idListString += realNewProduct[j].id.toString() + ' '
+        // saveErrorLog('deleteId', idListString)
+        //
+        // idListString = ''
+        // saveErrorLog('deleteId', 'Существующие ИД в каталоге ' + catalogId + ' кол-во ' +counter2)
+        // for (let j in currDuplicateIdList) idListString += currDuplicateIdList[j] + ' '
+        // saveErrorLog('deleteId', idListString)
+        //
+        //
+        // saveErrorLog('deleteId', 'Дубликаты в других каталога  ' + counter)
+        // for (let key of mapDuplicateIdListAnother.keys()){
+        //
+        //     const IdList = mapDuplicateIdListAnother.get(key)
+        //     saveErrorLog('deleteId', '   дубликаты в каталонге каталога  ' + key+ '  кол-во '+IdList.length)
+        //     idListString = ''
+        //     for (let j in IdList) idListString += IdList[j] + ' '
+        //     saveErrorLog('deleteId', idListString)
+        // }
+        //
+        // console.log('Сохранили инфо в  deleteId');
+
+        return [realNewProduct, mapDuplicateIdListAnother ]
+
+    }
+
+
+
+    // НУЖНО  удаляем дубликаты в разных каталогах
+    async viewDuplicateID (currProductList, catalogId){
+
+        let IdList = []
+        for (let k in currProductList) IdList.push(currProductList[k].id);
+
+        this.WBProductIdTable.tableName ='wb_productIdListAll'
+        await this.WBProductIdTable.sync({ alter: true })
+
+        const needId = await this.WBProductIdTable.findAll({ where: { id: IdList, catalogId :{[Op.not]:catalogId} }})
+
+        // let counter = 0
+        let productsToDelete = []
+        //Соберем те ИД  которые не соответсвуют
+        for (let j in currProductList)
+        {
+            for (let i in needId)
+                    if (currProductList[j].id === needId[i].id) {
+
+                        const oneProduct={
+                            id : needId[i].id,
+                            catalogId1 : catalogId,
+                            catalogId2 : needId[i].catalogId,
+                            subjectId1 :  currProductList[j].subjectId,
+                            subjectId2 :  0,
+                            historyCount1 : currProductList[j].priceHistory.length,
+                            historyCount2 : 0,
+                            info1 : currProductList[j],
+                            info2 :[],
+                        }
+                        productsToDelete.push(oneProduct)
+                        // counter ++
+                        // console.log(counter);
+                        break
+                    }
+
+        }
+
+        return productsToDelete
     }
 
     async test (){
