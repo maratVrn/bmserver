@@ -112,7 +112,7 @@ class WbController{
 
     async test (req, res, next) {
 
-        try {
+        try { 
 
             // const testResult  = await wbService.getWBSubjects_fromWB()
 

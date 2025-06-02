@@ -162,7 +162,7 @@ class TaskService{
                 await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
 
 
-                await delay(0.1 * 60 * 1000)
+                await delay(0.03 * 60 * 1000)
                 // break // убрать
             } catch(error) {
                 saveErrorLog('taskService',`Ошибка в loadAllNewProductList при обновлении таблицы `+taskData[i].tableName)
@@ -170,7 +170,8 @@ class TaskService{
             } 
 
 
- 
+
+
         }
        if (allTableIsUpdate) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
 
