@@ -94,6 +94,20 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                     await delay(50);
                     needGetData = true
                 }
+
+                if ((err.code === 'ETIMEDOUT') || (err.code === 'ENOTFOUND')) {
+                    saveErrorLog('PARSER_GetCurrProductList', 'Нет Итернета '+err.code)
+                    await delay(60_000*5);
+                    needGetData = true
+                } 
+
+                if (needGetData === false){
+                    saveErrorLog('PARSER_GetProductListInfo', 'Неизвестная ошибка '+err.code+'  делаем задержку 1 минут')
+                    await delay(60_000);
+                    needGetData = true
+
+                }
+
             }
         }
         if (!needGetNextProducts) break
