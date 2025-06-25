@@ -120,8 +120,8 @@ class WbController{
             // const testResult  = await ProductListService.test()
             // const testResult  = await ProductListService.getAllProductCount()
             // const testResult  = await ProductListService.deleteZeroProductListTable()
-
-            const testResult  = await TaskService.loadAllNewProductList(true, 30)
+            //
+            const testResult  = await TaskService.loadAllNewProductList(false, 10)
             // const testResult  = await wbService.getWBCatalog_fromWB()
             // const testResult  = await ProductListService.migrationALLToNewTableName()
             // const testResult  = await wbService.saveCatalogDataToFile()

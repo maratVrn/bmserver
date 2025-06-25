@@ -190,7 +190,7 @@ class ProductListService {
                     if (tableName.toString().includes('productList'))  {
                         this.WBCatalogProductList.tableName = tableName.toString()
                         const count = await this.WBCatalogProductList.count()
-                        console.log(i+' count '+ count);
+                        // console.log(i+' count '+ count);
                         if (count === 0) {
                             console.log(this.WBCatalogProductList.tableName);
                             await this.WBCatalogProductList.drop()
