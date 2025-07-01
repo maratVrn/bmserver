@@ -12,34 +12,21 @@ class ProductListService {
 
     WBCatalogProductList = sequelize.define('test_ok',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true},
-            maxPrice        :   {type: DataTypes.INTEGER},          // максимальная цена товара
+            dtype           :   {type: DataTypes.INTEGER},          // тип склада
             price           :   {type: DataTypes.INTEGER},          // максимальная цена товара
             reviewRating	:   {type: DataTypes.FLOAT},            // Рейтинг товара ПО Обзорам
-            discount        :   {type: DataTypes.FLOAT},            // текущая скида
             subjectId       :   {type: DataTypes.INTEGER},          // ИД Позиции в предмета
             brandId         :   {type: DataTypes.INTEGER},          // ИД Позиции в бренда
             saleCount       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц
-            saleMoney       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц
             totalQuantity   :   {type: DataTypes.INTEGER},          // Остатки последние
-            priceHistory:{type: DataTypes.JSON},         // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
+            saleMoney       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц в руб
+            priceHistory    :   {type: DataTypes.JSON},             // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
 
 
         },
         { createdAt: false,   updatedAt: false  }  )
 
-    // WBCatalogProductList_new = sequelize.define('test_ok_new',{
-    //         id:{type: DataTypes.INTEGER, primaryKey: true},
-    //         isNew:{type: DataTypes.BOOLEAN},             // Новый ли это товар
-    //         maxPrice:{type: DataTypes.INTEGER},          // максимальная цена товара
-    //         discount:{type: DataTypes.FLOAT},            // текущая скида
-    //         subjectId:{type: DataTypes.INTEGER},         // ИД Позиции в предмета
-    //         brandId:{type: DataTypes.INTEGER},           // ИД Позиции в бренда
-    //         totalQuantity:{type: DataTypes.INTEGER},     // Остатки последние
-    //         priceHistory:{type: DataTypes.JSON},         // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
-    //         countHistory:{type: DataTypes.JSON},         // История кол-ва товаров - берем только totalQuantity
-    //
-    //     },
-    //     { createdAt: false,   updatedAt: false  }  )
+
 
 
     // Проверяем наличие таблицы в базе данных по catalogId и создаем/обновляем параметры таблицы
@@ -86,7 +73,7 @@ class ProductListService {
                 const startCount = await this.WBCatalogProductList.count()
                 try {
                     await this.WBCatalogProductList.bulkCreate(newProductList, {
-                        updateOnDuplicate: ["maxPrice", "price", "reviewRating", "brandId",
+                        updateOnDuplicate: ["dtype", "price", "reviewRating", "brandId",
                             "saleCount", "saleMoney", "totalQuantity", "priceHistory", "subjectId"],
                     })
                 } catch (e) {console.log(e)
@@ -290,7 +277,11 @@ class ProductListService {
                         console.log('таблица --- > ' + tableName.toString());
                         allCount+=1
                         try {
-                            await sequelize.getQueryInterface().addColumn(tableName.toString(), 'saleMoney', DataTypes.INTEGER)
+                            await sequelize.getQueryInterface().addColumn(tableName.toString(), 'dtype', DataTypes.INTEGER)
+
+                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'discount',{})
+                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'maxPrice',{})
+
                         } catch (e){saveErrorLog('productListService', e)}
 
                     }
@@ -564,10 +555,9 @@ class ProductListService {
                 for (let i in cat2Products) {
                     duplicateProducts.push({
                         id: cat2Products[i].id,
-                        maxPrice: cat2Products[i].maxPrice,
                         price: cat2Products[i].price,
                         reviewRating: cat2Products[i].reviewRating,
-                        discount: cat2Products[i].discount,
+                        dtype: cat2Products[i].dtype,
                         subjectId: cat2Products[i].subjectId,
                         brandId: cat2Products[i].brandId,
                         saleCount: cat2Products[i].saleCount,

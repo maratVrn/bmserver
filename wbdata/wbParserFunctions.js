@@ -29,10 +29,9 @@ function getWBCatalogDataFromJsonReq(data){
             let jsonData = {
 
                 id: data[key].id ? data[key].id : -1,
-                maxPrice: price,
                 price: price,
                 reviewRating: data[key].reviewRating ? data[key].reviewRating : -1,
-                discount: 0,
+                dtype: data[key].dtype ? data[key].dtype : -1,
                 brandId: data[key].brandId ? data[key].brandId : -1,
                 saleCount : 0,
                 subjectId: data[key].subjectId ? data[key].subjectId : -1,
@@ -439,10 +438,9 @@ async function PARSER_GetProductListInfo(productIdList) {
 
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
-                                maxPrice        : price,
                                 price           : price,
                                 reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
-                                discount        : 0,
+                                dtype           : currProduct.dtype ? currProduct.dtype : 0,
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
@@ -458,10 +456,9 @@ async function PARSER_GetProductListInfo(productIdList) {
 
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
-                                maxPrice        : 0,
                                 price           : 0,
                                 reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
-                                discount        : 0,
+                                dtype           : currProduct.dtype ? currProduct.dtype : 0,
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
@@ -536,7 +533,7 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                         // Если остатков товара больше 0  то найдем цену
                         let price = -1
                         let basicPrice = -1
-                        let discount = 0
+
                         if (totalQuantity > 0) {
                             // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
 
@@ -544,7 +541,7 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                                 if (currProduct.sizes[k]?.price) {
                                     price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product) / 100) : -1
                                     basicPrice = currProduct.sizes[k]?.price?.basic ? Math.round(parseInt(currProduct.sizes[k]?.price?.basic) / 100) : -1
-                                    if (basicPrice>0) discount = Math.round( 100 * (basicPrice - price)/basicPrice )
+
                                     break
                                 }
                             }
@@ -566,7 +563,7 @@ async function PARSER_GetProductListInfoToClient(productIdList) {
                             price           : price,
                             totalQuantity   : totalQuantity,
                             reviewRating    : currProduct.reviewRating	 ? currProduct.reviewRating : 0,
-                            discount        : discount,
+                            dtype        : currProduct.dtype ? currProduct.dtype : 0,
                             feedbacks	    : currProduct.feedbacks ? currProduct.feedbacks : 0,
                             brand		    : currProduct.brand	    ? currProduct.brand	 : "",
                             name		    : currProduct.name	    ? currProduct.name		 : "",
