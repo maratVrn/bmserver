@@ -8,7 +8,7 @@ const cron = require("node-cron");       // Для выполнения зада
 const errorMiddleware = require('./exceptions/error-middleware')
 const fileUpload = require("express-fileupload")
 
-const PORT = process.env.PORT ||  5000;
+const PORT = process.env.PORT ||  5005;
 const app = express()
 
 
