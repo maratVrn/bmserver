@@ -13,6 +13,7 @@ class ProductListService {
     WBCatalogProductList = sequelize.define('test_ok',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true},
             dtype           :   {type: DataTypes.INTEGER},          // тип склада
+            needUpdate      :   {type: DataTypes.BOOLEAN},          // обновлять ли товар - остатки и др
             price           :   {type: DataTypes.INTEGER},          // максимальная цена товара
             reviewRating	:   {type: DataTypes.FLOAT},            // Рейтинг товара ПО Обзорам
             subjectId       :   {type: DataTypes.INTEGER},          // ИД Позиции в предмета
@@ -277,10 +278,10 @@ class ProductListService {
                         console.log('таблица --- > ' + tableName.toString());
                         allCount+=1
                         try {
-                            await sequelize.getQueryInterface().addColumn(tableName.toString(), 'dtype', DataTypes.INTEGER)
+                            await sequelize.getQueryInterface().addColumn(tableName.toString(), 'needUpdate', DataTypes.BOOLEAN)
 
-                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'discount',{})
-                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'maxPrice',{})
+                            // await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'discount',{})
+                            // await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'maxPrice',{})
 
                         } catch (e){saveErrorLog('productListService', e)}
 
