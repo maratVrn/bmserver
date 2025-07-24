@@ -10,6 +10,8 @@ const {body} = require('express-validator')
 
 router.get('/test', wbController.test)         // тестовая функция для отладки
 
+
+
 router.get('/deleteDuplicateID', wbController.deleteDuplicateID)         //  удаляем товары ДУБЛИКАТЫ которые по ошибке оказались не в том каталоге
 
 

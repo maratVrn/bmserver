@@ -225,8 +225,9 @@ class ProductListService {
     }
 
     // Колл-во всех товаров в базе в productList
-    async getAllProductCount(){
+    async getAllProductCount(withNoUpdateCount = false ){
         let allCount = 0
+        let allCountNoUpdate = 0
         saveParserFuncLog('listServiceInfo ', 'Собираем кол-во всех товаров в   --productList-- ')
         try {
 
@@ -241,13 +242,32 @@ class ProductListService {
 
                         this.WBCatalogProductList.tableName = tableName.toString()
                         const count = await this.WBCatalogProductList.count()
-                        saveParserFuncLog('listServiceInfo ', tableName+ ' count '+ count)
-                        console.log(tableName+ ' count '+ count);
+
+                        if (withNoUpdateCount) {
+                            const currProductList = await this.WBCatalogProductList.findAll({where: {needUpdate: false}})
+                            const noUpdateCount = currProductList.length
+                            allCountNoUpdate+=noUpdateCount
+                            saveParserFuncLog('listServiceInfo ', tableName + ' count ' + count+'   noUpdateCount  '+noUpdateCount)
+                            console.log(tableName+ ' count '+ count+'   noUpdateCount  '+noUpdateCount);
+                        } else {
+                            saveParserFuncLog('listServiceInfo ', tableName + ' count ' + count)
+                            console.log(tableName+ ' count '+ count);
+                        }
+
                         allCount += count
+
                     }
                 }
-            saveParserFuncLog('listServiceInfo ', 'Общее кол-во товаров '+allCount)
-            console.log('Общее кол-во товаров ' + allCount);
+            if (withNoUpdateCount) {
+                const needUpdateCount = allCount - allCountNoUpdate
+                saveParserFuncLog('listServiceInfo ', 'Общее кол-во товаров ' + allCount + '   НЕ удаляемых товаров '+allCountNoUpdate
+                    + '  Необходимо обновлять  ' + needUpdateCount)
+                console.log('Общее кол-во товаров ' + allCount + '   НЕ удаляемых товаров '+allCountNoUpdate
+                    + '  Необходимо обновлять  ' + needUpdateCount);
+            } else {
+                saveParserFuncLog('listServiceInfo ', 'Общее кол-во товаров ' + allCount)
+                console.log('Общее кол-во товаров ' + allCount);
+            }
 
         } catch (error) {
             saveErrorLog('productListService',`Ошибка в getAllProductCount`)

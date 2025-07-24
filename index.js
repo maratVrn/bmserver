@@ -43,6 +43,19 @@ const start = async () => {
         await sequelize.sync()
 
 
+        // Для отправки текущих состояний на админку клиента
+        // app.get('/sse', (req, res) => {
+        //     res.setHeader('Content-Type', 'text/event-stream');
+        //     res.setHeader('Cache-Control', 'no-cache');
+        //     res.setHeader('Connection', 'keep-alive');
+        //     const data = { message: 'Hello from the server!' };
+        //     res.write(`data: ${JSON.stringify(data)}\n\n`);
+        //     setInterval(() => {
+        //         const newData = { message: `Update at ${new Date().toLocaleTimeString()}` };
+        //         res.write(`data: ${JSON.stringify(newData)}\n\n`);
+        //     }, 5000)
+        // });
+
         // app.get('/test', (req, res) => {
         //     console.log('log_work');
         //     res.send(JSON.stringify(testData))
