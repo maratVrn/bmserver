@@ -7,6 +7,12 @@ const router = new Router()
 // Для валидации запросов
 const {body} = require('express-validator')
 
+// ИТОГОВЫЕ АПИ
+
+router.post('/loadNewProducts', wbController.loadNewProducts)
+
+// ВРЕМЕННЫЕ АПИ
+
 
 router.get('/test', wbController.test)         // тестовая функция для отладки
 

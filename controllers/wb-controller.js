@@ -109,6 +109,30 @@ class WbController{
 
     }
 
+    async loadNewProducts(req, res, next) {
+
+        try {
+            const onWork = req.body.onWork
+            const loadPageCount = req.body.loadPageCount
+            const loadOnlyNew = req.body.loadOnlyNew
+
+            console.log('Пришла команда на сервер starLoadNewProducts');
+            console.log('Состояние '+onWork);
+            console.log('Глубина страниц '+loadPageCount);
+            console.log('Только новые? '+loadOnlyNew);
+
+            // const testResult  = await TaskService.loadAllNewProductList(true, 20)
+            const testResult  = 'isOk'
+            console.log('testResult = '+testResult);
+            res.json(testResult)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+
+    }
+
+
 
     async test (req, res, next) {
 
