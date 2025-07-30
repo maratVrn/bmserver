@@ -11,7 +11,9 @@ const fileUpload = require("express-fileupload")
 const PORT = process.env.PORT ||  5005;
 const app = express()
 
-
+global.state = {
+    nowWork : false
+};
 
 // Запускаем функцию перерасчета портфелей
 // cron.schedule("0 9 * * 2-6", function() {
@@ -51,7 +53,7 @@ const start = async () => {
             const data = { message: 'Hello from the server!' };
             res.write(`data: ${JSON.stringify(data)}\n\n`);
             setInterval(() => {
-                const newData = { message: `Update at ${new Date().toLocaleTimeString()}` };
+                const newData = { message: `Update at ${new Date().toLocaleTimeString()} state ${global.state.nowWork}` };
                 res.write(`data: ${JSON.stringify(newData)}\n\n`);
             }, 5000)
         });

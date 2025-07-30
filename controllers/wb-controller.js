@@ -112,10 +112,14 @@ class WbController{
     async loadNewProducts(req, res, next) {
 
         try {
-            const onWork = req.body.onWork
-            const loadPageCount = req.body.loadPageCount
-            const loadOnlyNew = req.body.loadOnlyNew
 
+            console.log('tut');
+            const onWork = req.query.onWork
+            const loadPageCount = req.query.loadPageCount
+            const loadOnlyNew = req.query.loadOnlyNew
+            global.state.nowWork = onWork
+            console.log(global.state);
+            //
             console.log('Пришла команда на сервер starLoadNewProducts');
             console.log('Состояние '+onWork);
             console.log('Глубина страниц '+loadPageCount);

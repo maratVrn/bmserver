@@ -9,7 +9,7 @@ const {body} = require('express-validator')
 
 // ИТОГОВЫЕ АПИ
 
-router.post('/loadNewProducts', wbController.loadNewProducts)
+router.get('/loadNewProducts', wbController.loadNewProducts)
 
 // ВРЕМЕННЫЕ АПИ
 
