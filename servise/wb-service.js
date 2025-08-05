@@ -116,6 +116,7 @@ class WBService {
             // if (subjectList.length>0) {
                 console.log('Загружаем для предмета '+subjectList[k].name);
                 productListParserResult = await PARSER_GetProductList(catalogParam, [subjectList[k]], onlyNew, pageCount)
+
                 console.log('загрузили ' + productListParserResult.length);
 
                 const [realNewProduct, mapDuplicateIdListAnother ] = await ProductIdService.viewNewProductsInfo(productListParserResult,catalogId)
@@ -123,11 +124,11 @@ class WBService {
 
                 let AllNewProducts = [...realNewProduct];
                 realNewProductCount += realNewProduct.length
-                console.log('Получен массив с новыми продуктами '+AllNewProducts.length);
+                // console.log('Получен массив с новыми продуктами '+AllNewProducts.length);
                 AllNewProducts = [...AllNewProducts, ...duplicateProducts];
-                console.log('Добавили дубликатов '+duplicateProducts.length);
+                // console.log('Добавили дубликатов '+duplicateProducts.length);
                 duplicateProductCount += duplicateProducts.length
-                console.log('После обработки получили массив '+AllNewProducts.length);
+                // console.log('После обработки получили массив '+AllNewProducts.length);
                 // Сохраняем список товаров в базе данных
 
                 const [idData, resCount] = await ProductListService.saveAllNewProductList_New(AllNewProducts, catalogId)

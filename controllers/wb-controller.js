@@ -6,9 +6,15 @@ const TaskService = require('../servise/task-service')
 const WordStatisticService = require('../servise/wordStatistic-service')
 
 
-const {saveProductLIstToCVS} = require("../wbdata/wbfunk")
+const {saveProductLIstToCVS, getCurrDt} = require("../wbdata/wbfunk")
 const {saveErrorLog} = require("../servise/log");
+let {GlobalState}  = require("../controllers/globalState")
+// Состояние выполнения задач
+let wbState = {
+    isLoading: false,
+}
 class WbController{
+
 
     async getProductList_fromWB (req, res, next) {
 
@@ -113,22 +119,26 @@ class WbController{
 
         try {
 
-            console.log('tut');
-            const onWork = req.query.onWork
-            const loadPageCount = req.query.loadPageCount
-            const loadOnlyNew = req.query.loadOnlyNew
-            global.state.nowWork = onWork
-            console.log(global.state);
-            //
-            console.log('Пришла команда на сервер starLoadNewProducts');
-            console.log('Состояние '+onWork);
-            console.log('Глубина страниц '+loadPageCount);
-            console.log('Только новые? '+loadOnlyNew);
 
-            // const testResult  = await TaskService.loadAllNewProductList(true, 20)
-            const testResult  = 'isOk'
-            console.log('testResult = '+testResult);
-            res.json(testResult)
+
+            GlobalState.endErrorMessage = ''
+            try {
+
+                GlobalState.loadNewProducts.onWork = !GlobalState.loadNewProducts.onWork
+                GlobalState.loadNewProducts.loadPageCount = req.query.loadPageCount
+                GlobalState.loadNewProducts.loadOnlyNew = req.query.loadOnlyNew
+                GlobalState.loadNewProducts.disableButton = true
+                GlobalState.loadNewProducts.endStateTime = getCurrDt()
+                if (GlobalState.loadNewProducts.onWork) {
+                    GlobalState.loadNewProducts.endState = ' Запускаем команду loadNewProducts'
+                    await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)
+                } else GlobalState.loadNewProducts.endState = ' Останавливаем команду loadNewProducts'
+
+            } catch (e) {GlobalState.endErrorMessage = e.message}
+
+          // const testResult  = await TaskService.loadAllNewProductList(true, 20)
+
+            res.json(GlobalState)
         } catch (e) {
             console.log(e);
             next(e)
@@ -136,6 +146,36 @@ class WbController{
 
     }
 
+    async getStartServerInfo (req, res, next) {
+        try {
+            const dt =  new  Date()
+            console.log('Стартовый запрос '+ dt.toTimeString());
+            console.log(dt.toTimeString());
+
+            res.json(GlobalState)
+
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+
+    }
+
+    async getCurrServerInfo (req, res, next) {
+        try {
+            // const dt =  new  Date()
+            // const dd = dt.toLocaleDateString() + ' ' +dt.toLocaleTimeString()
+            //
+            // GlobalState.loadNewProducts.endState = ' Что то делаем '
+            // GlobalState.loadNewProducts.endStateTime = getCurrDt()
+            res.json(GlobalState)
+
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+
+    }
 
 
     async test (req, res, next) {

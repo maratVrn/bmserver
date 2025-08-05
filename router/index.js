@@ -7,14 +7,21 @@ const router = new Router()
 // Для валидации запросов
 const {body} = require('express-validator')
 
+// Апи для обмена инфо с сервером
+
+router.get('/getStartServerInfo', wbController.getStartServerInfo)         // тестовая функция для отладки
+router.get('/getCurrServerInfo', wbController.getCurrServerInfo)         // тестовая функция для отладки
+
+
 // ИТОГОВЫЕ АПИ
 
 router.get('/loadNewProducts', wbController.loadNewProducts)
 
+
+
 // ВРЕМЕННЫЕ АПИ
+router.get('/test', wbController.test)
 
-
-router.get('/test', wbController.test)         // тестовая функция для отладки
 
 
 

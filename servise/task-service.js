@@ -8,6 +8,8 @@ const ProductListService = require('../servise/productList-service')
 const WBService= require('../servise/wb-service')
 const {saveErrorLog, saveParserFuncLog} = require("./log");
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+let {GlobalState}  = require("../controllers/globalState")
+const {getCurrDt} = require("../wbdata/wbfunk")
 
 class TaskService{
 
@@ -128,6 +130,8 @@ class TaskService{
             if (allNoEndTask.length > 0) {
                 needTask = allNoEndTask[0]
                 saveParserFuncLog('taskService ', '  --- Нашли НЕ завершенную задачу с ID '+needTask.id)
+                GlobalState.loadNewProducts.endState = 'Нашли НЕ завершенную задачу с ID '+needTask.id.toString()
+                GlobalState.loadNewProducts.endStateTime = getCurrDt()
             } else {
 
                 const catalogParam = await WBService.getCatalogData()
@@ -154,16 +158,30 @@ class TaskService{
 
                 const [realNewProductCount, duplicateProductCount]  = await WBService.getProductList_fromWB(taskData[i].cParam.catalogParam, taskData[i].cParam.id,onlyNew, pageCount)
                 allAddCount += realNewProductCount
-                saveParserFuncLog('taskService ', '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+'  кол-во новых '+realNewProductCount+
-                    '  shard:'+taskData[i].cParam.catalogParam.shard+'  query:'+taskData[i].cParam.catalogParam.query+'  перенесеено дубликатов  = '+duplicateProductCount)
- 
+                let crMess = '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+' Новые = '+realNewProductCount+
+                '  Дубли = '+duplicateProductCount
+
+                GlobalState.loadNewProducts.endState = crMess
+                GlobalState.loadNewProducts.endStateTime = getCurrDt()
+
+                crMess += '  shard:'+taskData[i].cParam.catalogParam.shard+'  query:'+taskData[i].cParam.catalogParam.query
+
+                saveParserFuncLog('taskService ', crMess)
+
+
+
+
+
+
                 taskData[i].tableTaskEnd = true
                 taskData[i].tableTaskResult = realNewProductCount.toString()
                 await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
 
 
                 await delay(0.03 * 60 * 1000)
-                // break // убрать
+
+                if (!GlobalState.loadNewProducts.onWork) break
+
             } catch(error) {
                 saveErrorLog('taskService',`Ошибка в loadAllNewProductList при обновлении таблицы `+taskData[i].tableName)
                 saveErrorLog('taskService', error)
@@ -173,12 +191,19 @@ class TaskService{
 
 
         }
-       if (allTableIsUpdate) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
+        if (GlobalState.loadNewProducts.onWork) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
 
 
-
-        saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО ************** всего загружено '+allAddCount)
-        console.log(' ********  ЗАВЕРШЕНО **************');
+        if (GlobalState.loadNewProducts.onWork) {
+            GlobalState.loadNewProducts.onWork = false
+            GlobalState.loadNewProducts.endState += '\n ********  ЗАВЕРШЕНО ************** всего загружено ' + allAddCount.toString()
+            GlobalState.loadNewProducts.endStateTime = getCurrDt()
+            saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО ************** всего загружено ' + allAddCount)
+            console.log(' ********  ЗАВЕРШЕНО **************');
+        } else {
+            GlobalState.loadNewProducts.endState = '  ---   Выполнение задачи остановлено --- '
+            GlobalState.loadNewProducts.endStateTime = getCurrDt()
+        }
     }
 
 

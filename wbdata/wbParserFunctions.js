@@ -64,6 +64,7 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
 
                 await axios.get(url2, {proxy: proxy}).then(response => {
                     const resData = response.data
+
                     if (resData?.data?.products) {
 
                         const products = getWBCatalogDataFromJsonReq(resData.data.products)

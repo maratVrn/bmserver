@@ -1,6 +1,11 @@
 const fs = require("fs");
 const noIdCatalogInclude = [1111, 1234, 1235, 131289, 2192,62813, 1237, 131776, 131841]
 
+function getCurrDt ()  {
+    const dt =  new  Date()
+    return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString()
+}
+
 async function saveProductLIstInfoToCVS(productList,productListInfo ){
 
 
@@ -18,9 +23,6 @@ async function saveProductLIstInfoToCVS(productList,productListInfo ){
             else jsonDataNull += addLine // Если меньше то неактивная
 
     }
-    const header = `id\tsubjectId\ttotalQuantity\n`
-
-    // console.log(jsonDataNull);
 
     const fs = require('fs');
 
@@ -329,5 +331,5 @@ function findCatalogParamByID (catalogId, catalog){
 }
 
 module.exports = {
-     getLiteWBCatalogFromData, findCatalogParamByID, getIDListFromProductList, saveProductLIstToCVS, saveProductListToCVSFromLoadData, getCatalogData, getCatalogIdArray, saveProductLIstInfoToCVS
+     getLiteWBCatalogFromData, findCatalogParamByID, getIDListFromProductList, saveProductLIstToCVS, saveProductListToCVSFromLoadData, getCatalogData, getCatalogIdArray, saveProductLIstInfoToCVS, getCurrDt
 }
