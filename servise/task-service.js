@@ -103,6 +103,32 @@ class TaskService{
         saveParserFuncLog('taskService ', ' Всего удалено дубликатов '+allDuplicateCount)
     }
 
+
+    // Нужна отправляем список задач на сервер
+    async getAllTask(deleteIdList){
+        let result =[]
+        try {
+            if (deleteIdList) {
+                for (let i in deleteIdList) deleteIdList[i] = parseInt(deleteIdList[i])
+                if (deleteIdList.length > 0) await this.AllTask.destroy({where: {id: deleteIdList}})
+            }
+            const allTask = await this.AllTask.findAll({order: [['id']]})
+
+            for (let i in allTask){
+                let endI = 0
+                for (let k in allTask[i].taskData){
+                    endI = parseInt(k)
+                    if (!allTask[i].taskData[k].tableTaskEnd) break
+                }
+
+
+                result.push({id: allTask[i].id, taskName:allTask[i].taskName, isEnd:allTask[i].isEnd, endI : endI.toString()+' из '+ allTask[i].taskData.length.toString()})
+            }
+        } catch (e) {}
+        return result
+
+    }
+
     // НУЖНА БАЗОВАЯ ФУНКЦИЯ загружаем товары с вб ИЛИ обновляем если появились новые
     async loadAllNewProductList (onlyNew = false, pageCount = 30){
 

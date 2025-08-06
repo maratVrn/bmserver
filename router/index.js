@@ -15,6 +15,7 @@ router.get('/getCurrServerInfo', wbController.getCurrServerInfo)         // те
 
 // ИТОГОВЫЕ АПИ
 
+router.get('/getAllTask', wbController.getAllTask)
 router.get('/loadNewProducts', wbController.loadNewProducts)
 
 

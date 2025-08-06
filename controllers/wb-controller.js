@@ -115,15 +115,27 @@ class WbController{
 
     }
 
+
+    async getAllTask (req, res, next) {
+
+        try {
+            let deleteIdList = []
+            try { deleteIdList = req.query.deleteIdList} catch (e) { }
+
+            const result  = await TaskService.getAllTask(deleteIdList)
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+
+    }
+
     async loadNewProducts(req, res, next) {
 
         try {
-
-
-
             GlobalState.endErrorMessage = ''
             try {
-
                 GlobalState.loadNewProducts.onWork = !GlobalState.loadNewProducts.onWork
                 GlobalState.loadNewProducts.loadPageCount = req.query.loadPageCount
                 GlobalState.loadNewProducts.loadOnlyNew = req.query.loadOnlyNew
@@ -135,9 +147,6 @@ class WbController{
                 } else GlobalState.loadNewProducts.endState = ' Останавливаем команду loadNewProducts'
 
             } catch (e) {GlobalState.endErrorMessage = e.message}
-
-          // const testResult  = await TaskService.loadAllNewProductList(true, 20)
-
             res.json(GlobalState)
         } catch (e) {
             console.log(e);
@@ -148,12 +157,7 @@ class WbController{
 
     async getStartServerInfo (req, res, next) {
         try {
-            const dt =  new  Date()
-            console.log('Стартовый запрос '+ dt.toTimeString());
-            console.log(dt.toTimeString());
-
             res.json(GlobalState)
-
         } catch (e) {
             console.log(e);
             next(e)
@@ -163,13 +167,7 @@ class WbController{
 
     async getCurrServerInfo (req, res, next) {
         try {
-            // const dt =  new  Date()
-            // const dd = dt.toLocaleDateString() + ' ' +dt.toLocaleTimeString()
-            //
-            // GlobalState.loadNewProducts.endState = ' Что то делаем '
-            // GlobalState.loadNewProducts.endStateTime = getCurrDt()
             res.json(GlobalState)
-
         } catch (e) {
             console.log(e);
             next(e)
@@ -211,11 +209,7 @@ class WbController{
     // НУЖНО!! УДАЛЯЕМ ДУБЛИКАТЫ одинаковых товаров в разных каталонах
     async deleteDuplicateID (req, res, next) {
         try {
-            console.log('tt');
             const result = await TaskService.deleteDuplicateID()
-            // const result = await ProductListService.deleteDuplicateID()
-
-
             res.json(result)
         } catch (e) {   console.log(e);   next(e)}
     }
@@ -223,7 +217,6 @@ class WbController{
     async uploadNewWordStatisticData(req, res, next) {
 
         try {
-
 
             const file = req.files['wordsfile']
             const result  = await WordStatisticService.uploadNewWordStatisticData(file)
