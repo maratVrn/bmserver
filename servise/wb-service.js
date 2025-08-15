@@ -158,23 +158,16 @@ class WBService {
         if (newAllWBCatalog.id)   return newAllWBCatalog.id
     }
 
-    // Загружаем с БД последнюю версию лайт каталога и отпарвляем на фронт для отображения списка
-    async getLiteWBCatalog (){
-        const WBCatalog_ALL = await WBCatalog.findAll()
-        let result = []
-        WBCatalog_ALL.sort((a, b) => a.id < b.id ? -1 : 1)
-        if (WBCatalog_ALL.at(-1).catalogLite)  result = WBCatalog_ALL.at(-1).catalogLite
-        if (WBCatalog_ALL.at(-1).catalogAll)  this.allWBCatalog = WBCatalog_ALL.at(-1).catalogAll
-        return result
-    }
 
-    // Получаем полный каталог товаров с подгруппами с сайта ВБ
+
+    // НУЖНА Получаем полный каталог товаров с подгруппами с сайта ВБ
     async getWBCatalog_fromWB ( ){
         let wbCatalog = 'no data'
 
         try {
             const url2 = process.env.WB_URL_GET_ALL_CATALOG;
             await axios.get(url2).then(response => {
+                // После загрузки каталога сохраним его в базе данных
                 this.newAllWBCatalog(response.data)
                 wbCatalog = response.data
             })

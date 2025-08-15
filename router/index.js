@@ -6,17 +6,24 @@ const router = new Router()
   
 // Для валидации запросов
 const {body} = require('express-validator')
+const ProductListService = require("../servise/productList-service");
 
 // Апи для обмена инфо с сервером
-
-router.get('/getStartServerInfo', wbController.getStartServerInfo)         // тестовая функция для отладки
-router.get('/getCurrServerInfo', wbController.getCurrServerInfo)         // тестовая функция для отладки
-
-
 // ИТОГОВЫЕ АПИ
 
-router.get('/getAllTask', wbController.getAllTask)
+router.get('/getCurrServerInfo', wbController.getCurrServerInfo)         // Получаем текущее состояние о работе сервера
+router.get('/getAllTask', wbController.getAllTask)                       // Загружаем список текущих зажач и удаляем при необходимости
+
+// Потоковые функции через task-service
 router.get('/loadNewProducts', wbController.loadNewProducts)
+router.get('/deleteDuplicateID', wbController.deleteDuplicateID)         //  удаляем товары ДУБЛИКАТЫ которые по ошибке оказались не в том каталоге
+router.get('/setNoUpdateProducts', wbController.setNoUpdateProducts)     //  Установка флагов обновляем/нет
+
+
+
+// Разовые функции
+router.get('/getWBCatalog_fromWB', wbController.getWBCatalog_fromWB)        // получаем полный каталог товаров и сохраняем в таблицу wbCatalog // TODO: Продумать на обудущее сохранение - нужно ли его делать или просто обновлять текущий последний.. по сути это пока разовая функция
+router.get('/getAllProductCount', wbController.getAllProductCount)        // получаем полный каталог товаров и сохраняем в таблицу wbCatalog
 
 
 
@@ -26,16 +33,10 @@ router.get('/test', wbController.test)
 
 
 
-router.get('/deleteDuplicateID', wbController.deleteDuplicateID)         //  удаляем товары ДУБЛИКАТЫ которые по ошибке оказались не в том каталоге
 
 
 // ПАРСИНГ Данных с САЙТА ВБ
-router.get('/getWBCatalog_fromWB', wbController.getWBCatalog_fromWB)        // получаем полный каталог товаров и сохраняем в таблицу wbCatalog // TODO: Продумать на обудущее сохранение - нужно ли его делать или просто обновлять текущий последний.. по сути это пока разовая функция
 router.get('/getWBSubjects_fromWB', wbController.getWBSubjects_fromWB)       // Получаем данные по всем Subjects по всем разделам каталога - и сохраняем в таблицу AllSubjects
-
-
-// Роутеры для обмена данными с базой данных и получения информации по товарам wb
-router.get('/getLiteWBCatalog', wbController.getLiteWBCatalog)         //Загрузка Лайт Версии каталога ВБ с Базы данных, последняя доступная версия
 
 
 // Роутеры для работы со статистикой запросов

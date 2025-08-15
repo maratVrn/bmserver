@@ -4,6 +4,7 @@ const {DataTypes, Op} = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require('../servise/log')
 const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo, PARSER_GetProductList_SubjectsID_ToDuplicate} = require("../wbdata/wbParserFunctions");
 const ProductIdService= require('../servise/productId-service')
+const {calcIzZeroProduct} = require('../wbdata/wbfunk')
 
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -224,8 +225,8 @@ class ProductListService {
 
     }
 
-    // Колл-во всех товаров в базе в productList
-    async getAllProductCount(withNoUpdateCount = false ){
+    // НУЖНО Колл-во всех товаров в базе в productList
+    async getAllProductCount(withNoUpdateCount = true ){
         let allCount = 0
         let allCountNoUpdate = 0
         saveParserFuncLog('listServiceInfo ', 'Собираем кол-во всех товаров в   --productList-- ')
@@ -596,7 +597,60 @@ class ProductListService {
         return duplicateProducts
     }
 
+// НУЖНА!!!  Устанавливаем флаг  needUpdate
+    async setNoUpdateProducts(productList_tableName){
+        let deleteCount = 0
+        let allCount = 0
+        try {
 
+            if (productList_tableName) {
+                this.WBCatalogProductList.tableName = productList_tableName.toString()
+                const endId = await this.WBCatalogProductList.count()-1
+                allCount = endId+1
+                if (endId === -1)  saveParserFuncLog('updateServiceInfo ', 'Нулевая таблица '+productList_tableName.toString())
+                let deleteIdCount = 0     // массив с удаленными товарами
+
+                const step = 200_000 //process.env.PARSER_MAX_QUANTITY_SEARCH
+
+                for (let i = 0; i <= endId; i++) {
+                    const currProductList = await this.WBCatalogProductList.findAll({ offset: i, limit: step, order: [['id'] ] })
+                    console.log('загрузили товаров ' + currProductList.length);
+                    for (let k in currProductList){
+                        currProductList[k].needUpdate = true
+                        if (parseInt(k) === 0) await currProductList[k].save()
+                        const isZeroProduct = calcIzZeroProduct(currProductList[k])
+                        currProductList[k].needUpdate = !isZeroProduct
+                        if (isZeroProduct) deleteIdCount++
+                        await currProductList[k].save()
+
+                    }
+
+                    i += step-1
+                }
+
+                console.log('Кол-во Не обновляемых продуктов ' + deleteIdCount);
+                deleteCount += deleteIdCount
+                // Удаляем нерабочие ИД-ки - НЕТ!!! рещил их оставиьт но просто НЕ обновлять
+                // if (deleteIdArray.length>0) {
+                // let delstr = ''
+                // for (let z in deleteIdArray) delstr += ' '+deleteIdArray[z]
+                // saveErrorLog('deletedId', '------------------  '+productList_tableName+'  ------------------')
+                // saveErrorLog('deletedId', delstr)
+                // await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                // await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList', '')))
+                // }
+
+            }
+
+
+        } catch (error) {
+            saveErrorLog('productListService',`Ошибка в setNoUpdateProducts в таблице `+ productList_tableName.toString())
+            saveErrorLog('productListService', error)
+            console.log(error);
+        }
+
+        return [allCount,deleteCount]
+    }
 
 }
 

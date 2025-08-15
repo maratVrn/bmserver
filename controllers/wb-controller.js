@@ -16,47 +16,7 @@ let wbState = {
 class WbController{
 
 
-    async getProductList_fromWB (req, res, next) {
 
-        try {
-            const catalogId = req.query.catalogID ? parseInt(req.query.catalogID) : 0
-            // const page = req.query.page ? parseInt(req.query.page) : 0
-            console.log('Начинаем парсить товары по '+ catalogId.toString());
-            //TODO: это все удалить
-          // const productList  = await wbService.getProductList_fromWB(catalogId)
-
-            res.json(productList)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-
-    }
-
-    // async updateProductList_fromWB (req, res, next) {
-    //
-    //     try {
-    //         const catalogId = req.query.catalogID ? parseInt(req.query.catalogID) : 0
-    //         const productList  = await wbService.updateProductList_fromWB(catalogId)
-    //         res.json(productList)
-    //     } catch (e) {
-    //         console.log(e);
-    //         next(e)
-    //     }
-    //
-    // }
-
-    async getBrandsAndSubjects_fromWB (req, res, next) {
-
-        try {
-            const result  = await wbService.getBrandsAndSubjects_fromWB()
-            res.json(result)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-
-    }
 
     async saveProductList (req, res, next) {
 
@@ -78,17 +38,20 @@ class WbController{
 
     }
 
-    async getLiteWBCatalog (req, res, next) {
+
+
+    async getAllProductCount (req, res, next) {
 
         try {
-            const allWBCatalog  = await wbService.getLiteWBCatalog()
-            res.json(allWBCatalog)
+            const result  = await ProductListService.getAllProductCount(true)
+            res.json(result)
         } catch (e) {
             console.log(e);
             next(e)
         }
 
     }
+
 
     async getWBCatalog_fromWB (req, res, next) {
 
@@ -115,7 +78,7 @@ class WbController{
 
     }
 
-
+    // НУЖНА!! Запускаем список текущих задач
     async getAllTask (req, res, next) {
 
         try {
@@ -131,6 +94,34 @@ class WbController{
 
     }
 
+
+    // НУЖНА!! Установка флагов needUpdate
+    async setNoUpdateProducts(req, res, next) {
+
+        try {
+            GlobalState.endErrorMessage = ''
+            try {
+                GlobalState.setNoUpdateProducts.onWork = !GlobalState.setNoUpdateProducts.onWork
+                // GlobalState.setNoUpdateProducts.loadPageCount = req.query.loadPageCount
+                // GlobalState.setNoUpdateProducts.loadOnlyNew = req.query.loadOnlyNew
+                // GlobalState.setNoUpdateProducts.disableButton = true
+                GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+                if (GlobalState.setNoUpdateProducts.onWork) {
+                    GlobalState.setNoUpdateProducts.endState = ' Запускаем команду setNoUpdateProducts'
+                    await TaskService.setNoUpdateProducts()
+                } else GlobalState.setNoUpdateProducts.endState = ' Останавливаем команду setNoUpdateProducts'
+
+            } catch (e) {GlobalState.endErrorMessage = e.message}
+            console.log(GlobalState.setNoUpdateProducts.endState);
+            res.json(GlobalState)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+
+    }
+
+    // НУЖНА!! Запускаем получение новых товаров
     async loadNewProducts(req, res, next) {
 
         try {
@@ -155,16 +146,7 @@ class WbController{
 
     }
 
-    async getStartServerInfo (req, res, next) {
-        try {
-            res.json(GlobalState)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-
-    }
-
+    // НУЖНА!! Обмен с клиентом о текущем состоянии сервера
     async getCurrServerInfo (req, res, next) {
         try {
             res.json(GlobalState)
@@ -185,11 +167,11 @@ class WbController{
             // const testResult  = await ProductListService.deleteAllProductListTable()
             // const testResult  = await ProductListService.test()
 
-            // const testResult  = await ProductListService.getAllProductCount(true)
+            const testResult  = await ProductListService.getAllProductCount(true)
 
             // const testResult  = await ProductListService.deleteZeroProductListTable()
             //
-            const testResult  = await TaskService.loadAllNewProductList(true, 20)
+            // const testResult  = await TaskService.loadAllNewProductList(true, 20)
             // const testResult  = await wbService.getWBCatalog_fromWB()
             // const testResult  = await ProductListService.migrationALLToNewTableName()
 
@@ -208,10 +190,24 @@ class WbController{
 
     // НУЖНО!! УДАЛЯЕМ ДУБЛИКАТЫ одинаковых товаров в разных каталонах
     async deleteDuplicateID (req, res, next) {
+
         try {
-            const result = await TaskService.deleteDuplicateID()
-            res.json(result)
-        } catch (e) {   console.log(e);   next(e)}
+            GlobalState.endErrorMessage = ''
+            try {
+                GlobalState.deleteDuplicateID.onWork = !GlobalState.deleteDuplicateID.onWork
+                GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
+                if (GlobalState.deleteDuplicateID.onWork) {
+                    GlobalState.deleteDuplicateID.endState = ' Запускаем команду deleteDuplicateID'
+                   await TaskService.deleteDuplicateID()
+                } else GlobalState.deleteDuplicateID.endState = ' Останавливаем команду deleteDuplicateID'
+
+            } catch (e) {GlobalState.endErrorMessage = e.message}
+            console.log(GlobalState.deleteDuplicateID.endState);
+            res.json(GlobalState)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
     }
 
     async uploadNewWordStatisticData(req, res, next) {
@@ -231,19 +227,6 @@ class WbController{
 
 
 
-
-    async updateAllSubjects_inBD (req, res, next) {
-
-        try {
-            const catalogId = req.params.link
-            console.log(catalogId);
-            const result  = await CatalogService.updateAllSubjects_inBD()
-            res.json(result)
-        } catch (e) {
-            next(e)
-        }
-
-    }
 
 }
 

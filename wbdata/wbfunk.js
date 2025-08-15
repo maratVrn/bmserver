@@ -135,6 +135,52 @@ async function saveProductLIstToCVS(data, fName, dtype){
 
 }
 
+// Выбираем какие ИД считать с нулевым обновлением и ставим влаг needUpdate = false чтобы не терять время на их обновление
+function calcIzZeroProduct(product){
+    const maxDayInBase = 50
+    const maxZeroDays = 10  // Кол-во дней с нулевым остатком
+    const minQ = 4
+    let isZeroProduct = false
+    let needCalc = false
+    const nowDay = new Date(Date.now())
+    if (product.priceHistory[0]) {
+        // console.log(product.priceHistory[0]);
+        const s = product.priceHistory[0].d.split('.')
+        let startDate = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+        const diffDays = Math.floor((nowDay - startDate) / (1000*60*60*24))
+        // console.log(diffDays);
+        if (diffDays>maxDayInBase) needCalc = true
+    }
+    if (needCalc){
+        if (product.priceHistory[0].q >minQ ) needCalc= false
+        if (product.priceHistory.at(-1).q >minQ ) needCalc= false
+    }
+    if (needCalc){
+        isZeroProduct = true
+        for (let i = 0; i<product.priceHistory.length-1; i++){
+            if (product.priceHistory[i+1].q - product.priceHistory[i].q > 5 ){
+                isZeroProduct = false
+                break
+            }
+        }
+    }
+    if (!isZeroProduct){
+        if (product.priceHistory.at(-1).q === 0){
+            const nowDay = new Date(Date.now())
+            const s = product.priceHistory.at(-1).d.split('.')
+            let startDate = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+            const diffDays = Math.floor((nowDay - startDate) / (1000*60*60*24))
+            if (diffDays>maxZeroDays) isZeroProduct = true
+        }
+    }
+
+
+    // console.log(isZeroProduct);
+
+    return isZeroProduct
+}
+
+
 // Подготоваливаем лайт верисю каталога для быстрой передачи на фронт
 function getLiteWBCatalogFromData(data) {
     const rezult = []
@@ -331,5 +377,5 @@ function findCatalogParamByID (catalogId, catalog){
 }
 
 module.exports = {
-     getLiteWBCatalogFromData, findCatalogParamByID, getIDListFromProductList, saveProductLIstToCVS, saveProductListToCVSFromLoadData, getCatalogData, getCatalogIdArray, saveProductLIstInfoToCVS, getCurrDt
+     getLiteWBCatalogFromData, findCatalogParamByID, getIDListFromProductList, saveProductLIstToCVS, calcIzZeroProduct, getCatalogData, getCatalogIdArray, saveProductLIstInfoToCVS, getCurrDt
 }

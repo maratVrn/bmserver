@@ -7,18 +7,12 @@ const router = require('./router/index')
 const cron = require("node-cron");       // Для выполнения задачи по расписанию
 const errorMiddleware = require('./exceptions/error-middleware')
 const fileUpload = require("express-fileupload")
-
+let {GlobalState}  = require("./controllers/globalState")
+const {getCurrDt} = require("./wbdata/wbfunk");
 const PORT = process.env.PORT ||  5005;
 const app = express()
 
-global.state = {
-    nowWork : false
-};
 
-// Запускаем функцию перерасчета портфелей
-// cron.schedule("0 9 * * 2-6", function() {
-//     updateProfitData()
-// });
 
 app.use(express.json({limit: '10mb'}));
 app.use(cookieParser());
@@ -42,15 +36,10 @@ const testData = [
 const start = async () => {
     try {
         await sequelize.authenticate()
+        GlobalState.serverStartMessage = getCurrDt() + '  Сервер перезапустили'
+
         await sequelize.sync()
-
-
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
-        // Запускаем телеграм бота
-        // signalBot.on('message', async msg => {
-        //     await signalBot_ON(msg)
-        //
-        // })
 
     } catch (e) {
         console.log(e)

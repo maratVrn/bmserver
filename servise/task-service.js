@@ -52,6 +52,8 @@ class TaskService{
             if (allNoEndTask.length > 0) {
                 needTask = allNoEndTask[0]
                 saveParserFuncLog('taskService ', '  --- Нашли НЕ завершенную задачу с ID '+needTask.id)
+                GlobalState.deleteDuplicateID.endState = 'Нашли НЕ завершенную задачу с ID '+needTask.id.toString()
+                GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
             } else {
                 const allProductListTableName = await ProductListService.getAllProductListTableName()
                 for (let i in allProductListTableName) {
@@ -64,7 +66,8 @@ class TaskService{
 
                 needTask = await this.AllTask.create(currTask)
                 saveParserFuncLog('taskService ', '  --- Создали новую задачу с ID '+needTask.id)
-
+                GlobalState.deleteDuplicateID.endState = '--- Создали новую задачу с ID'+needTask.id.toString()
+                GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
             }
 
         } catch (error) { saveErrorLog('taskService',`Ошибка в deleteDuplicateID при определении задачи новая или продолжаем `)
@@ -81,7 +84,9 @@ class TaskService{
 
                 allDuplicateCount += duplicateCount
                 saveParserFuncLog('taskService ', '----- Удалено дубликатов = '+duplicateCount +'  нарастающим итогом = '+allDuplicateCount)
-
+                const crMess =  'Таблица № '+i+'  '+taskData[i].tableName+' Удалено = '+duplicateCount +' Итого = '+allDuplicateCount
+                GlobalState.deleteDuplicateID.endState = crMess
+                GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
 
                 taskData[i].tableTaskEnd = true
                 taskData[i].tableTaskResult = allDuplicateCount
@@ -90,17 +95,29 @@ class TaskService{
 
                 // if (i>2) break // TODO: отладка
                 await delay(0.02 * 60 * 1000)
+                if (!GlobalState.deleteDuplicateID.onWork) break
 
             } catch(error) {
                 saveErrorLog('taskService',`Ошибка в deleteDuplicateID при обновлении таблицы `+taskData[i].tableName)
                 saveErrorLog('taskService', error)
             }
         }
-        // await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
+        if (GlobalState.deleteDuplicateID.onWork) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
 
-        console.log('deleteDuplicateID isOk');
-        saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
-        saveParserFuncLog('taskService ', ' Всего удалено дубликатов '+allDuplicateCount)
+        if (GlobalState.loadNewProducts.onWork) {
+            GlobalState.deleteDuplicateID.onWork = false
+            GlobalState.deleteDuplicateID.endState += ' *****  ЗАВЕРШЕНО ********* Всего удалено дубликатов ' + allDuplicateCount.toString()
+            GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
+            console.log('deleteDuplicateID isOk');
+            saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
+            saveParserFuncLog('taskService ', ' Всего удалено дубликатов '+allDuplicateCount)
+
+        } else {
+            GlobalState.deleteDuplicateID.endState = '  ---   Выполнение задачи остановлено --- '
+            GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
+        }
+
+
     }
 
 
@@ -168,6 +185,8 @@ class TaskService{
 
                 needTask = await this.AllTask.create(currTask)
                 saveParserFuncLog('taskService ', '  --- Создали новую задачу с ID '+needTask.id)
+                GlobalState.loadNewProducts.endState = '--- Создали новую задачу с ID'+needTask.id.toString()
+                GlobalState.loadNewProducts.endStateTime = getCurrDt()
 
             }
 
@@ -194,18 +213,11 @@ class TaskService{
 
                 saveParserFuncLog('taskService ', crMess)
 
-
-
-
-
-
                 taskData[i].tableTaskEnd = true
                 taskData[i].tableTaskResult = realNewProductCount.toString()
                 await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
 
-
                 await delay(0.03 * 60 * 1000)
-
                 if (!GlobalState.loadNewProducts.onWork) break
 
             } catch(error) {
@@ -232,6 +244,107 @@ class TaskService{
         }
     }
 
+
+    // НУЖНА  !!!! Устанавливаем флаг  needUpdate - который потом будем использовать при обновлении товаров
+    async setNoUpdateProducts (){
+        const taskName = 'setNoUpdateProducts'
+        let needTask = {}
+        let allDeletedCount = 0
+
+        // Сначала разберемся с задачей - продолжать ли старую или создать новую
+        saveParserFuncLog('taskService ', '  ----------  Запускаем задачу setNoUpdateProducts -------')
+        try {
+
+            const allNoEndTask = await this.AllTask.findAll({
+                where: {isEnd: false, taskName: taskName},
+                order: [['id']]
+            })
+
+            let currTask = {
+                taskName: taskName,
+                isEnd: false,
+                startDateTime: new Date().toString(),
+                taskData: [],
+                taskResult: []
+            }
+
+
+            if (allNoEndTask.length > 0) {
+                needTask = allNoEndTask[0]
+                saveParserFuncLog('taskService ', '  --- Нашли НЕ завершенную задачу с ID '+needTask.id)
+                GlobalState.setNoUpdateProducts.endState = 'Нашли НЕ завершенную задачу с ID '+needTask.id.toString()
+                GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+
+            } else {
+                const allProductListTableName = await ProductListService.getAllProductListTableName()
+                for (let i in allProductListTableName) {
+                    const oneTaskData = {
+                        tableName: allProductListTableName[i],
+                        tableTaskEnd: false,
+                        tableTaskResult: ''
+                    }
+                    currTask.taskData.push(oneTaskData)
+                }
+
+                needTask = await this.AllTask.create(currTask)
+                saveParserFuncLog('taskService ', '  --- Создали новую задачу с ID '+needTask.id)
+                GlobalState.setNoUpdateProducts.endState = '--- Создали новую задачу с ID'+needTask.id.toString()
+                GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+
+            }
+
+        } catch (error) { saveErrorLog('taskService',`Ошибка в setNoUpdateProducts при определении задачи новая или продолжаем `)
+            saveErrorLog('taskService', error)}
+
+        // Далее запустим процедуру  обновления по списку задач
+        let taskData = [...needTask.taskData]
+        let allTableIsUpdate = true
+        for (let i in taskData){
+
+            if (!taskData[i].tableTaskEnd) try {
+                console.log(taskData[i].tableName);
+
+                const [allCount, deleteCount]  = await ProductListService.setNoUpdateProducts(taskData[i].tableName)
+
+                // TODO: Отладка
+                taskData[i].tableTaskEnd =  true
+                taskData[i].tableTaskResult = deleteCount
+                await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
+                const crMess = '--- Таблица № '+parseInt(i)+'   '+taskData[i].tableName+' Всего товаров =  '+ allCount+'  неактивных  '+deleteCount
+                saveParserFuncLog('taskService ', crMess)
+                GlobalState.setNoUpdateProducts.endState = crMess
+                GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+                allDeletedCount += deleteCount
+
+                // await delay(0.0005 * 60 * 1000)
+                if (!GlobalState.setNoUpdateProducts.onWork) break
+
+            } catch(error) {
+                saveErrorLog('taskService',`Ошибка в setNoUpdateProducts при обновлении таблицы `+taskData[i].tableName)
+                saveErrorLog('taskService', error)
+            }
+            // break // TODO: Отладка
+        }
+        if (GlobalState.setNoUpdateProducts.onWork) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
+
+
+        if (GlobalState.setNoUpdateProducts.onWork) {
+            GlobalState.setNoUpdateProducts.onWork = false
+            GlobalState.setNoUpdateProducts.endState += ' ********  ЗАВЕРШЕНО **************  ВСЕГО товаров БЕЗ обновления  '+allDeletedCount.toString()
+            GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+            console.log('loadNewProducts isOk');
+            saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
+            saveParserFuncLog('taskService ', ' ВСЕГО товаров БЕЗ обновления  '+allDeletedCount)
+
+
+        } else {
+            GlobalState.setNoUpdateProducts.endState = '  ---   Выполнение задачи остановлено --- '
+            GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+        }
+
+
+
+    }
 
 
     async test(){
