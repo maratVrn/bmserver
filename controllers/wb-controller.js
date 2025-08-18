@@ -102,17 +102,16 @@ class WbController{
             GlobalState.endErrorMessage = ''
             try {
                 GlobalState.setNoUpdateProducts.onWork = !GlobalState.setNoUpdateProducts.onWork
-                // GlobalState.setNoUpdateProducts.loadPageCount = req.query.loadPageCount
-                // GlobalState.setNoUpdateProducts.loadOnlyNew = req.query.loadOnlyNew
-                // GlobalState.setNoUpdateProducts.disableButton = true
                 GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+                GlobalState.serverState.endStateTime = getCurrDt()
+
                 if (GlobalState.setNoUpdateProducts.onWork) {
                     GlobalState.setNoUpdateProducts.endState = ' Запускаем команду setNoUpdateProducts'
+                    GlobalState.serverState.endState = ' Запускаем команду setNoUpdateProducts'
                     await TaskService.setNoUpdateProducts()
                 } else GlobalState.setNoUpdateProducts.endState = ' Останавливаем команду setNoUpdateProducts'
-
+                GlobalState.serverState.endState = GlobalState.setNoUpdateProducts.endState
             } catch (e) {GlobalState.endErrorMessage = e.message}
-            console.log(GlobalState.setNoUpdateProducts.endState);
             res.json(GlobalState)
         } catch (e) {
             console.log(e);
@@ -132,18 +131,42 @@ class WbController{
                 GlobalState.loadNewProducts.loadOnlyNew = req.query.loadOnlyNew
                 GlobalState.loadNewProducts.disableButton = true
                 GlobalState.loadNewProducts.endStateTime = getCurrDt()
+                GlobalState.serverState.endStateTime = getCurrDt()
                 if (GlobalState.loadNewProducts.onWork) {
                     GlobalState.loadNewProducts.endState = ' Запускаем команду loadNewProducts'
+                    GlobalState.serverState.endState = ' Запускаем команду loadNewProducts'
                     await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)
                 } else GlobalState.loadNewProducts.endState = ' Останавливаем команду loadNewProducts'
-
+                GlobalState.serverState.endState = GlobalState.loadNewProducts.endState
             } catch (e) {GlobalState.endErrorMessage = e.message}
             res.json(GlobalState)
         } catch (e) {
             console.log(e);
             next(e)
         }
+    }
+    // НУЖНО!! УДАЛЯЕМ ДУБЛИКАТЫ одинаковых товаров в разных каталонах
+    async deleteDuplicateID (req, res, next) {
 
+        try {
+            GlobalState.endErrorMessage = ''
+            try {
+                GlobalState.deleteDuplicateID.onWork = !GlobalState.deleteDuplicateID.onWork
+                GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
+                GlobalState.serverState.endStateTime = getCurrDt()
+                if (GlobalState.deleteDuplicateID.onWork) {
+                    GlobalState.deleteDuplicateID.endState = ' Запускаем команду deleteDuplicateID'
+                    GlobalState.serverState.endState = ' Запускаем команду deleteDuplicateID'
+                    await TaskService.deleteDuplicateID()
+                } else GlobalState.deleteDuplicateID.endState = ' Останавливаем команду deleteDuplicateID'
+                GlobalState.serverState.endState = GlobalState.deleteDuplicateID.endState
+            } catch (e) {GlobalState.endErrorMessage = e.message}
+            console.log(GlobalState.deleteDuplicateID.endState);
+            res.json(GlobalState)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
     }
 
     // НУЖНА!! Обмен с клиентом о текущем состоянии сервера
@@ -188,27 +211,7 @@ class WbController{
 
     }
 
-    // НУЖНО!! УДАЛЯЕМ ДУБЛИКАТЫ одинаковых товаров в разных каталонах
-    async deleteDuplicateID (req, res, next) {
 
-        try {
-            GlobalState.endErrorMessage = ''
-            try {
-                GlobalState.deleteDuplicateID.onWork = !GlobalState.deleteDuplicateID.onWork
-                GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
-                if (GlobalState.deleteDuplicateID.onWork) {
-                    GlobalState.deleteDuplicateID.endState = ' Запускаем команду deleteDuplicateID'
-                   await TaskService.deleteDuplicateID()
-                } else GlobalState.deleteDuplicateID.endState = ' Останавливаем команду deleteDuplicateID'
-
-            } catch (e) {GlobalState.endErrorMessage = e.message}
-            console.log(GlobalState.deleteDuplicateID.endState);
-            res.json(GlobalState)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-    }
 
     async uploadNewWordStatisticData(req, res, next) {
 

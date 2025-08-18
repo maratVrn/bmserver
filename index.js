@@ -37,6 +37,8 @@ const start = async () => {
     try {
         await sequelize.authenticate()
         GlobalState.serverStartMessage = getCurrDt() + '  Сервер перезапустили'
+        GlobalState.serverState.endState = '  Сервер перезапустили'
+        GlobalState.serverState.endStateTime = getCurrDt()
 
         await sequelize.sync()
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))

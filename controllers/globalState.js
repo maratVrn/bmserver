@@ -4,6 +4,11 @@ let GlobalState ={
     isServerWork: true,
     serverStartMessage : '',
 
+    serverState : {
+        endState : 'Нет информации',
+        endStateTime : ''
+    },
+
     loadNewProducts : {
         onWork : false,
         loadPageCount : 20,
@@ -21,6 +26,14 @@ let GlobalState ={
 
     setNoUpdateProducts: {
         onWork : false,
+        endState : 'Нет информации',
+        endStateTime : ''
+    },
+
+    updateAllProductList : {
+        onWork : false,
+        needCalcData : false,
+        updateAll : false,
         endState : 'Нет информации',
         endStateTime : ''
     },
