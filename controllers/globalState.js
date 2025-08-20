@@ -3,6 +3,12 @@
 let GlobalState ={
     isServerWork: true,
     serverStartMessage : '',
+    allCommands : ['loadNewProducts', 'deleteDuplicateID','setNoUpdateProducts','updateAllProductList'],
+
+    taskSchedule : {
+        mainCommand : 'updateAllProductList ',
+
+    },
 
     serverState : {
         endState : 'Нет информации',

@@ -119,6 +119,32 @@ class WbController{
         }
 
     }
+    // НУЖНА!! Запускаем обновление остатков и расчет показателей
+
+    async updateAllProductList(req, res, next) {
+
+        try {
+            GlobalState.endErrorMessage = ''
+            try {
+                GlobalState.updateAllProductList.onWork = !GlobalState.updateAllProductList.onWork
+                GlobalState.updateAllProductList.updateAll = req.query.updateAll ? req.query.updateAll : false
+                GlobalState.updateAllProductList.needCalcData = req.query.needCalcData ? req.query.needCalcData : false
+                GlobalState.updateAllProductList.endStateTime = getCurrDt()
+                GlobalState.serverState.endStateTime = getCurrDt()
+
+                if (GlobalState.updateAllProductList.onWork) {
+                    GlobalState.updateAllProductList.endState = ' Запускаем команду updateAllProductList'
+                    GlobalState.serverState.endState = ' Запускаем команду updateAllProductList'
+                    await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
+                } else GlobalState.updateAllProductList.endState = ' Останавливаем команду updateAllProductList'
+                GlobalState.serverState.endState = GlobalState.updateAllProductList.endState
+            } catch (e) {GlobalState.endErrorMessage = e.message}
+            res.json(GlobalState)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
 
     // НУЖНА!! Запускаем получение новых товаров
     async loadNewProducts(req, res, next) {
@@ -183,7 +209,7 @@ class WbController{
 
     async test (req, res, next) {
 
-        try { 
+        try {
 
             // const testResult  = await wbService.getWBSubjects_fromWB()
 

@@ -4,7 +4,7 @@ const {DataTypes, Op} = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require('../servise/log')
 const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo, PARSER_GetProductList_SubjectsID_ToDuplicate} = require("../wbdata/wbParserFunctions");
 const ProductIdService= require('../servise/productId-service')
-const {calcIzZeroProduct} = require('../wbdata/wbfunk')
+const {calcIzZeroProduct, getDataFromHistory} = require('../wbdata/wbfunk')
 
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -650,6 +650,217 @@ class ProductListService {
         }
 
         return [allCount,deleteCount]
+    }
+
+    // НУЖНА!!! ПАРСННГ Глобальная задача - обновляем информацию в выюранноной таблице и там же сохраняем
+
+    async updateAllWBProductListInfo_fromTable2(productList_tableName, needCalcData, updateAll = true){
+        let updateResult = 'Старт обновления'
+        let updateCount = 0
+        let deleteCount = 0
+        // saveParserFuncLog('updateServiceInfo ', 'Обновляем информацию для таблицы '+productList_tableName)
+        try {
+
+
+            // Второй вариант - Пагинация внутри запросов
+            if (productList_tableName) {
+
+                this.WBCatalogProductList.tableName = productList_tableName.toString()
+                const endId = await this.WBCatalogProductList.count()-1
+                if (endId === -1)  saveParserFuncLog('updateServiceInfo ', 'Нулевая таблица '+productList_tableName.toString())
+
+                const step = 200_000 //process.env.PARSER_MAX_QUANTITY_SEARCH
+
+                for (let i = 0; i <= endId; i++) {
+
+                    const currProductList = updateAll?
+                        await this.WBCatalogProductList.findAll({offset: i, limit: step, order: [['id'] ] })
+                        : await this.WBCatalogProductList.findAll({ where: { needUpdate:{  [Op.or]: [true, null]}}, offset: i, limit: step, order: [['id'] ] })
+
+                    console.log(' загрузили элементов  ' + currProductList.length);
+                    // break
+                    let saveArray = []          // массив с обновленными данными
+                    let deleteIdArray = []      // массив с удаленными товарами
+                    const step2 = 500
+                    for (let j = 0; j < currProductList.length; j ++) {
+                        try {
+
+                            let end_j = j + step2 - 1 < currProductList.length ? j + step2 - 1 : currProductList.length - 1
+                            let productList = []
+
+                            for (let k = j; k <= end_j; k++)
+                                productList.push(currProductList[k].id)
+
+
+                            console.log('j = ' + j + '  --  Запросили = ' + productList.length);
+
+                            const updateProductListInfo = await PARSER_GetProductListInfo(productList)
+                            const [saveResult,newSaveArray, newDeleteIdArray] = await this.update_AllProductList(currProductList,updateProductListInfo, j, end_j, needCalcData )
+
+                            updateCount += updateProductListInfo.length
+                            if (saveResult) saveArray = [...saveArray,...newSaveArray]
+                            deleteIdArray = [...deleteIdArray, ...newDeleteIdArray]
+
+                            j += step2 - 1
+
+                        } catch (error) {
+                            console.log(error);
+                        }
+                        // break
+
+                    }
+
+
+                    i += step-1
+                    if (saveArray.length === 0)
+                        saveParserFuncLog('updateServiceInfo ', 'Нулевая таблица '+productList_tableName.toString())
+
+                    console.log('Всего нужно обновить ' + saveArray.length);
+                    console.log('нужно удалить ' + deleteIdArray.length);
+
+                    deleteCount = deleteIdArray.length
+                    if (needCalcData)  await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["price","reviewRating","dtype","totalQuantity","saleCount","saleMoney","priceHistory"]  })
+                    else await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["price","totalQuantity","priceHistory"]  })
+
+
+                    // Удаляем нерабочие ИД-ки
+                    await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                    await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList','')))
+
+
+                }
+
+                updateResult = ' isOk, needProduct : ' + (endId+1).toString() + ' , updateProduct : '+updateCount.toString()
+
+            }
+
+
+        } catch (error) {
+            saveErrorLog('productListService',`Ошибка в updateAllWBProductListInfo_fromTable в таблице `+ productList_tableName.toString())
+            saveErrorLog('productListService', error)
+            console.log(error);
+        }
+
+        console.log('updateAllWBProductListInfo_fromTable isOk');
+        return [updateResult, updateCount, deleteCount]
+    }
+
+    // НУЖНА!!! Обновляем информацию в сущетсвующей таблице и сохраняем изменные  товары в базе данных
+    async update_AllProductList (allProductList,updateProductListInfo, startI, endI , needCalcData = false){
+        let saveResult = false
+        let newDeleteIdArray = []
+        let saveArray = []
+        if (updateProductListInfo.length>0)
+            try {
+                // Сначала создадим Обновленный массив с данными
+
+                for (let i = startI; i <= endI; i ++) {
+                    try {
+                        const oneProduct = {
+                            id              : allProductList[i]?.id ? allProductList[i].id : 0,
+                            price           : allProductList[i]?.price ? allProductList[i].price : 0,
+                            dtype           : allProductList[i]?.dtype ? allProductList[i].dtype : 0,
+                            reviewRating    : 0,
+                            totalQuantity   : 0,
+                            saleMoney       : 0,
+                            saleCount       : 0,
+                            priceHistory    : allProductList[i]?.priceHistory ? allProductList[i]?.priceHistory : [],
+                            // TODO: Добавил эти поля для отладки
+                            kindId	        : allProductList[i]?.kindId ? allProductList[i].kindId : 0,
+                            subjectId       : allProductList[i]?.subjectId ? allProductList[i].subjectId : 0,
+                            brandId         : allProductList[i]?.brandId ? allProductList[i].brandId : 0,
+                        }
+
+
+                        let inUpdateData = false
+                        for (let j in updateProductListInfo)
+                            if (oneProduct.id === updateProductListInfo[j].id) {
+
+                                try {
+                                    // console.log('ид '+oneProduct.id);
+                                    // console.log('Было');
+                                    // console.log(oneProduct.priceHistory);
+                                    const oldHistory = oneProduct.priceHistory.at(-1)
+                                    // Проверим совпадают ли значения - если ДА то удалим последний элемент
+                                    if (oldHistory) {
+                                        if ((oldHistory.q === updateProductListInfo[j]?.priceHistory[0].q) &&
+                                            (oldHistory.sp === updateProductListInfo[j]?.priceHistory[0].sp)) {
+
+                                            if (oldHistory.q > 0) {
+                                                oneProduct.priceHistory.pop()
+                                            }
+                                        }
+                                        // Дата задвоилась
+                                        if ((oldHistory.d === updateProductListInfo[j]?.priceHistory[0].d) &&
+                                            (oldHistory.q >0 )) {
+                                            oneProduct.priceHistory.pop()
+                                        }
+                                    }
+                                    if (updateProductListInfo[j]?.totalQuantity > 0)
+                                        oneProduct.priceHistory.push(updateProductListInfo[j]?.priceHistory[0])
+                                    if ((updateProductListInfo[j]?.totalQuantity === 0) && (oldHistory.q > 0))
+                                        oneProduct.priceHistory.push(updateProductListInfo[j]?.priceHistory[0])
+                                    //
+                                    // console.log('Стало');
+                                    // console.log(oneProduct.priceHistory);
+
+                                    oneProduct.totalQuantity = updateProductListInfo[j]?.totalQuantity ? updateProductListInfo[j]?.totalQuantity : 0
+                                    oneProduct.dtype = updateProductListInfo[j]?.dtype>0 ? updateProductListInfo[j]?.dtype : oneProduct.dtype
+                                    oneProduct.reviewRating = updateProductListInfo[j]?.reviewRating ? updateProductListInfo[j]?.reviewRating : 0
+                                    oneProduct.kindId = updateProductListInfo[j]?.kindId ? updateProductListInfo[j]?.kindId : 0
+
+                                    // Если нужно обновлять расчет за последние 30 дней (тк это занимает время делаем не постоянно)
+                                    if (needCalcData) {
+
+                                        let isFbo =  oneProduct.dtype === 4
+                                        const saleInfo = getDataFromHistory(oneProduct.priceHistory,
+                                            updateProductListInfo[j].price, updateProductListInfo[j].totalQuantity, 30,isFbo, false )
+                                        oneProduct.saleMoney = saleInfo.totalMoney
+                                        oneProduct.saleCount = saleInfo.totalSaleQuantity
+
+                                        // TODO: тут обнаружены аномалии - обьем продаж может быть очень большим что говорит о левых записях в бд
+                                        // пока просто сохраним данные об этом ID и поставим saleMoney в опр число
+                                        if (oneProduct.saleMoney > 1_111_111_111){
+                                            oneProduct.saleMoney = 0
+                                            oneProduct.saleCount = 0
+                                            saveParserFuncLog('unomalId ', 'Аномальные данные в ID '+oneProduct.id)
+                                        }
+                                    }
+
+
+
+
+
+
+                                    if (updateProductListInfo[j]?.totalQuantity > 0) {
+                                        if (updateProductListInfo[j]?.price > 0) {
+                                            oneProduct.price = updateProductListInfo[j].price
+                                        }
+                                    }
+
+                                }  catch (error) {}
+                                inUpdateData = true
+                                saveArray.push(oneProduct)
+
+                            }
+
+                        if (!inUpdateData) {
+                            // saveErrorLog('noUpdateListID', oneProduct.id.toString())
+                            newDeleteIdArray.push(oneProduct.id)
+                        }
+
+                    } catch (error) {
+                        console.log(error);
+                    }
+
+                }
+                saveResult = true
+            } catch (error) {
+                saveErrorLog('productListService',`Ошибка в update_and_saveAllProductList`)
+                saveErrorLog('productListService', error)
+                console.log(error)
+            }
+        return  [saveResult,saveArray, newDeleteIdArray]
     }
 
 }

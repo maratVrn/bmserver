@@ -286,6 +286,7 @@ async function PARSER_GetProductList_SubjectsID_ToDuplicate(productIdList) {
 
 async function PARSER_GetProductListInfo(productIdList) {
 
+
     let productListInfo = []
     let needGetData = true
 
@@ -296,14 +297,14 @@ async function PARSER_GetProductListInfo(productIdList) {
         if (i>0) productListStr += ';'
         productListStr += parseInt(productIdList[i]).toString()
     }
-      while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
         try {
 
             const dt = new Date().toLocaleDateString()
 
             const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
-
-            await axios.get(url, ProxyAndErrors.config).then(response => {
+            // axios.get(url, {proxy: global.axiosProxy})
+            await axios.get(url).then(response => {
                 const resData = response.data
 
                 if (resData.data) {
@@ -323,44 +324,46 @@ async function PARSER_GetProductListInfo(productIdList) {
                                 }
                             }
 
+                            // Определим dtype
+                            let dtype = -1
+                            // TODO: Потом это убрать!! это надо сделать один раз при загрузке нового товара и забить и брать из описания
+                            if (currProduct.dtype) dtype = currProduct.dtype
+
+
                             const priceHistory_tmp = []
-                            priceHistory_tmp.push({d: dt, sp: price})
-
-
-                            const countHistory_tmp = []
-                            countHistory_tmp.push({d: dt, q: totalQuantity})
-
-
+                            priceHistory_tmp.push({d: dt, sp: price, q:totalQuantity})
 
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
                                 price           : price,
                                 reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
-                                dtype           : currProduct.dtype ? currProduct.dtype : 0,
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
+                                saleCount       : 0,
+                                saleMoney       : 0,
                                 totalQuantity   : totalQuantity,
                                 priceHistory    : priceHistory_tmp,
-                                countHistory    : countHistory_tmp,
+                                dtype           : dtype,
                             }
 
                             productListInfo.push(newProduct)
                         } else {
-                            const countHistory_tmp = []
-                            countHistory_tmp.push({d: dt, q: 0})
+                            const priceHistory_tmp = []
+                            priceHistory_tmp.push({d: dt, sp: 0, q:0})
 
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
                                 price           : 0,
                                 reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
-                                dtype           : currProduct.dtype ? currProduct.dtype : 0,
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
+                                saleCount       : 0,
+                                saleMoney       : 0,
                                 totalQuantity   : totalQuantity,
-                                priceHistory    : [],
-                                countHistory    : countHistory_tmp,
+                                priceHistory    : priceHistory_tmp,
+                                dtype           : 0,
                             }
 
                             productListInfo.push(newProduct)
@@ -371,8 +374,8 @@ async function PARSER_GetProductListInfo(productIdList) {
 
                 }})
             needGetData = false
-        }catch (err) {
-            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo', 'url ')
+        } catch (err) {
+            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo', 'noData ')
         }
     }
 

@@ -33,6 +33,10 @@ const testData = [
     }
 ]
 
+function taskSchedule(arg) {
+    console.log('Проверяем работу робота' +getCurrDt());
+}
+
 const start = async () => {
     try {
         await sequelize.authenticate()
@@ -42,6 +46,11 @@ const start = async () => {
 
         await sequelize.sync()
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
+
+
+
+        // Запускаем функцию проверки состояния сервера
+        setInterval(taskSchedule, 1000*60, 'noArg');
 
     } catch (e) {
         console.log(e)
