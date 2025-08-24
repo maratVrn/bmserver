@@ -8,7 +8,7 @@ const WordStatisticService = require('../servise/wordStatistic-service')
 
 const {saveProductLIstToCVS, getCurrDt} = require("../wbdata/wbfunk")
 const {saveErrorLog} = require("../servise/log");
-let {GlobalState}  = require("../controllers/globalState")
+let {GlobalState,saveServerMessage}  = require("../controllers/globalState")
 // Состояние выполнения задач
 let wbState = {
     isLoading: false,
@@ -38,8 +38,6 @@ class WbController{
 
     }
 
-
-
     async getAllProductCount (req, res, next) {
 
         try {
@@ -51,7 +49,6 @@ class WbController{
         }
 
     }
-
 
     async getWBCatalog_fromWB (req, res, next) {
 
@@ -103,14 +100,12 @@ class WbController{
             try {
                 GlobalState.setNoUpdateProducts.onWork = !GlobalState.setNoUpdateProducts.onWork
                 GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
-                GlobalState.serverState.endStateTime = getCurrDt()
 
                 if (GlobalState.setNoUpdateProducts.onWork) {
                     GlobalState.setNoUpdateProducts.endState = ' Запускаем команду setNoUpdateProducts'
-                    GlobalState.serverState.endState = ' Запускаем команду setNoUpdateProducts'
+                    saveServerMessage(' Запускаем команду setNoUpdateProducts',getCurrDt() )
                     await TaskService.setNoUpdateProducts()
-                } else GlobalState.setNoUpdateProducts.endState = ' Останавливаем команду setNoUpdateProducts'
-                GlobalState.serverState.endState = GlobalState.setNoUpdateProducts.endState
+                } else saveServerMessage(' Останавливаем команду setNoUpdateProducts',getCurrDt() )
             } catch (e) {GlobalState.endErrorMessage = e.message}
             res.json(GlobalState)
         } catch (e) {
@@ -130,14 +125,13 @@ class WbController{
                 GlobalState.updateAllProductList.updateAll = req.query.updateAll ? req.query.updateAll : false
                 GlobalState.updateAllProductList.needCalcData = req.query.needCalcData ? req.query.needCalcData : false
                 GlobalState.updateAllProductList.endStateTime = getCurrDt()
-                GlobalState.serverState.endStateTime = getCurrDt()
 
                 if (GlobalState.updateAllProductList.onWork) {
                     GlobalState.updateAllProductList.endState = ' Запускаем команду updateAllProductList'
-                    GlobalState.serverState.endState = ' Запускаем команду updateAllProductList'
+                    saveServerMessage(' Запускаем команду updateAllProductList',getCurrDt() )
                     await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
-                } else GlobalState.updateAllProductList.endState = ' Останавливаем команду updateAllProductList'
-                GlobalState.serverState.endState = GlobalState.updateAllProductList.endState
+                } else saveServerMessage(' Останавливаем команду updateAllProductList',getCurrDt() )
+
             } catch (e) {GlobalState.endErrorMessage = e.message}
             res.json(GlobalState)
         } catch (e) {
@@ -157,13 +151,12 @@ class WbController{
                 GlobalState.loadNewProducts.loadOnlyNew = req.query.loadOnlyNew
                 GlobalState.loadNewProducts.disableButton = true
                 GlobalState.loadNewProducts.endStateTime = getCurrDt()
-                GlobalState.serverState.endStateTime = getCurrDt()
+
                 if (GlobalState.loadNewProducts.onWork) {
                     GlobalState.loadNewProducts.endState = ' Запускаем команду loadNewProducts'
-                    GlobalState.serverState.endState = ' Запускаем команду loadNewProducts'
+                    saveServerMessage(' Запускаем команду loadNewProducts',getCurrDt() )
                     await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)
-                } else GlobalState.loadNewProducts.endState = ' Останавливаем команду loadNewProducts'
-                GlobalState.serverState.endState = GlobalState.loadNewProducts.endState
+                } else saveServerMessage(' Останавливаем команду loadNewProducts',getCurrDt() )
             } catch (e) {GlobalState.endErrorMessage = e.message}
             res.json(GlobalState)
         } catch (e) {
@@ -179,13 +172,11 @@ class WbController{
             try {
                 GlobalState.deleteDuplicateID.onWork = !GlobalState.deleteDuplicateID.onWork
                 GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
-                GlobalState.serverState.endStateTime = getCurrDt()
                 if (GlobalState.deleteDuplicateID.onWork) {
                     GlobalState.deleteDuplicateID.endState = ' Запускаем команду deleteDuplicateID'
-                    GlobalState.serverState.endState = ' Запускаем команду deleteDuplicateID'
+                    saveServerMessage(' Запускаем команду deleteDuplicateID',getCurrDt() )
                     await TaskService.deleteDuplicateID()
-                } else GlobalState.deleteDuplicateID.endState = ' Останавливаем команду deleteDuplicateID'
-                GlobalState.serverState.endState = GlobalState.deleteDuplicateID.endState
+                } else saveServerMessage(' Останавливаем команду deleteDuplicateID',getCurrDt() )
             } catch (e) {GlobalState.endErrorMessage = e.message}
             console.log(GlobalState.deleteDuplicateID.endState);
             res.json(GlobalState)

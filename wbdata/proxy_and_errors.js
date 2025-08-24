@@ -69,25 +69,30 @@ class ProxyAndErrors {
     async view_error (err, funcName, funcParam){
         let needGetData = false
 
+        let timeAddWord = '1 мин'
+        let timeAddMs = 1000*60
 
         // Временно не доступен сайт ВБ
         if (err.code === 'ECONNRESET') {
+            console.log('Ошибка '+err.code+' не доступен сайт ВБ делаем задержку '+timeAddWord);
             saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+err.code);
-            await delay(50);
+            await delay(timeAddMs);
             needGetData = true
         }
 
         // Сломался интернет
-        if (err.code === 'ETIMEDOUT') {
+        if ((err.code === 'ETIMEDOUT') || (err.code === 'ENOTFOUND') || (err.code === 'ECONNREFUSED')) {
+            console.log('Ошибка '+err.code+' Сломался интернет задержку '+timeAddWord);
             saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+err.code);
-            await delay(5000);
+            await delay(timeAddMs);
             needGetData = true
         }
 
 
-        // Сломался прокис
+        // Сломался прокси
         if (err.code === 'ERR_SOCKET_CLOSED') {
             // прокси сломался
+            console.log('Ошибка '+err.code+' Сломался прокси меняем его');
             saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+err.code);
             saveErrorLog('ProxyAndErrors', funcName+' неработающий прокси с idx '+this.proxyId);
             this.getNextProxy(true)
@@ -99,6 +104,7 @@ class ProxyAndErrors {
 
         // Частое подключение к серверу - меняем прокси
         if ((err.status === 429) || (err.response?.status === 429)) {
+            console.log('Ошибка Частое подключение к серверу - меняем прокси');
             // saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+'Частое подключение к серверу')
             this.getNextProxy()
             await delay(50);
@@ -109,8 +115,9 @@ class ProxyAndErrors {
 
         // Необработанная ошибка
         if (!needGetData){
+            console.log('Ошибка '+err.code+' неизвестная задержку '+timeAddWord);
             saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+'Необработанная ошибка err.code = '+err.code)
-
+            await delay(timeAddMs);
         }
 
         return needGetData

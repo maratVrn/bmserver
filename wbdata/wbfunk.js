@@ -6,6 +6,12 @@ function getCurrDt ()  {
     return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString()
 }
 
+function getCurrHours_Minutes ()  {
+    const dt =  new  Date()
+    return [dt.getHours(), dt.getMinutes()]
+}
+
+
 async function saveProductLIstInfoToCVS(productList,productListInfo ){
 
 
@@ -573,5 +579,5 @@ function getDataFromHistory (history, endPrice, totalQuantity, daysCount = 30, i
 }
 
 module.exports = {
-     getLiteWBCatalogFromData, findCatalogParamByID, getIDListFromProductList, saveProductLIstToCVS, calcIzZeroProduct, getCatalogData, getCatalogIdArray, getDataFromHistory, getCurrDt
+     getLiteWBCatalogFromData, findCatalogParamByID, getCurrHours_Minutes, saveProductLIstToCVS, calcIzZeroProduct, getCatalogData, getCatalogIdArray, getDataFromHistory, getCurrDt
 }

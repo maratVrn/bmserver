@@ -1,14 +1,15 @@
 // Глобальная переменная по отлсеживанию всех статусов работы задач
+const {saveParserFuncLog} = require("../servise/log");
+const {getCurrDt} = require("../wbdata/wbfunk");
 
 let GlobalState ={
+
+
     isServerWork: true,
-    serverStartMessage : '',
+
     allCommands : ['loadNewProducts', 'deleteDuplicateID','setNoUpdateProducts','updateAllProductList'],
+    nextCommand : 'setNoUpdateProducts',
 
-    taskSchedule : {
-        mainCommand : 'updateAllProductList ',
-
-    },
 
     serverState : {
         endState : 'Нет информации',
@@ -47,6 +48,13 @@ let GlobalState ={
     endErrorMessage : ''
 }
 
+function saveServerMessage (endState, endStateTime){
+    GlobalState.serverState.endState = endState
+    GlobalState.serverState.endStateTime = endStateTime
+
+    saveParserFuncLog('server', endState)
+}
+
 module.exports = {
-    GlobalState
+    GlobalState, saveServerMessage
 }

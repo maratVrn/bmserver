@@ -8,7 +8,7 @@ const ProductListService = require('../servise/productList-service')
 const WBService= require('../servise/wb-service')
 const {saveErrorLog, saveParserFuncLog} = require("./log");
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-let {GlobalState}  = require("../controllers/globalState")
+let {GlobalState, saveServerMessage}  = require("../controllers/globalState")
 const {getCurrDt} = require("../wbdata/wbfunk")
 
 class TaskService{
@@ -23,7 +23,26 @@ class TaskService{
 
         })
 
+    // Нужна - определяем нужно ли стартовать главную задачу
+    async needStartMainTask () {
+        let needStartMainTask = true
+        let dateNow = new Date()
+        // const taskName = 'setNoUpdateProducts'
+        const taskName = 'updateAllProductList'
+        const allTask = await this.AllTask.findAll({
+            where: {taskName: taskName},
+            order: [['id']]
+        })
+        for (let i in allTask){
+            let dd = new Date(allTask[i].startDateTime)
+            if ((allTask[i].isEnd) && (dd.toLocaleDateString() === dateNow.toLocaleDateString())) {
+                needStartMainTask = false
+                break
+            }
+        }
 
+        return needStartMainTask
+    }
 
     // Провеяем соотвествие всех товаров в продукт лист - и информацию в таблицах ИД. Если товара нет в ИД таблице ставим там catalogId = -1
     async deleteDuplicateID (){
@@ -107,6 +126,7 @@ class TaskService{
             GlobalState.deleteDuplicateID.onWork = false
             GlobalState.deleteDuplicateID.endState += ' *****  ЗАВЕРШЕНО ********* Всего удалено дубликатов ' + allDuplicateCount.toString()
             GlobalState.deleteDuplicateID.endStateTime = getCurrDt()
+            saveServerMessage(' ЗАВЕРШИЛИ команду deleteDuplicateID',getCurrDt() )
             console.log('deleteDuplicateID isOk');
             saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
             saveParserFuncLog('taskService ', ' Всего удалено дубликатов '+allDuplicateCount)
@@ -133,12 +153,12 @@ class TaskService{
             for (let i in allTask){
                 let endI = 0
                 for (let k in allTask[i].taskData){
-                    endI = parseInt(k)
+                    endI = parseInt(k)+1
                     if (!allTask[i].taskData[k].tableTaskEnd) break
                 }
 
-
-                result.push({id: allTask[i].id, taskName:allTask[i].taskName, isEnd:allTask[i].isEnd, endI : endI.toString()+' из '+ allTask[i].taskData.length.toString()})
+                let dd = new Date(allTask[i].startDateTime)
+                result.push({id: allTask[i].id, taskName:allTask[i].taskName, isEnd:allTask[i].isEnd, endI : endI.toString()+' из '+ allTask[i].taskData.length.toString(), dt : dd.toLocaleDateString()})
             }
         } catch (e) {}
         return result
@@ -194,9 +214,7 @@ class TaskService{
 
         // Далее запустим процедуру  обновления по списку задач
         let taskData = [...needTask.taskData]
-        let allTableIsUpdate = true
         let allAddCount = 0
-        // console.log('tut '+taskData.length);
         for (let i in taskData){
             if (!taskData[i].tableTaskEnd) try {
 
@@ -235,6 +253,7 @@ class TaskService{
             GlobalState.loadNewProducts.onWork = false
             GlobalState.loadNewProducts.endState += '\n ********  ЗАВЕРШЕНО ************** всего загружено ' + allAddCount.toString()
             GlobalState.loadNewProducts.endStateTime = getCurrDt()
+            saveServerMessage(' ЗАВЕРШИЛИ команду loadNewProducts',getCurrDt() )
             saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО ************** всего загружено ' + allAddCount)
             console.log(' ********  ЗАВЕРШЕНО **************');
         } else {
@@ -298,7 +317,7 @@ class TaskService{
         let taskData = [...needTask.taskData]
         let allTableIsUpdate = true
         for (let i in taskData){
-            // if (parseInt(i)>1700)
+            // if (parseInt(i)>2484)
             if (!taskData[i].tableTaskEnd) try {
                 console.log(taskData[i].tableName);
                 const [updateResult,updateCount, deleteCount]  = await ProductListService.updateAllWBProductListInfo_fromTable2(taskData[i].tableName, needCalcData, updateAll)
@@ -330,6 +349,7 @@ class TaskService{
             GlobalState.updateAllProductList.onWork = false
             GlobalState.updateAllProductList.endState = ' ********  ЗАВЕРШЕНО *****ВСЕГО обновили '+allUpdateCount+ ' удалили '+allDeletedCount.toString()
             GlobalState.updateAllProductList.endStateTime = getCurrDt()
+            saveServerMessage(' ЗАВЕРШИЛИ команду updateAllProductList',getCurrDt() )
             console.log( '********  ЗАВЕРШЕНО **************');
             saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
             saveParserFuncLog('taskService ', ' ВСЕГО обновили '+allUpdateCount+ ' удалили '+allDeletedCount)
@@ -427,6 +447,7 @@ class TaskService{
             GlobalState.setNoUpdateProducts.onWork = false
             GlobalState.setNoUpdateProducts.endState = ' ********  ЗАВЕРШЕНО **************  ВСЕГО товаров БЕЗ обновления  '+allDeletedCount.toString()
             GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
+            saveServerMessage(' ЗАВЕРШИЛИ команду setNoUpdateProducts',getCurrDt() )
             console.log(' ********  ЗАВЕРШЕНО ************** ');
             saveParserFuncLog('taskService ', ' ********  ЗАВЕРШЕНО **************')
             saveParserFuncLog('taskService ', ' ВСЕГО товаров БЕЗ обновления  '+allDeletedCount)

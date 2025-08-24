@@ -7,8 +7,9 @@ const router = require('./router/index')
 const cron = require("node-cron");       // Для выполнения задачи по расписанию
 const errorMiddleware = require('./exceptions/error-middleware')
 const fileUpload = require("express-fileupload")
-let {GlobalState}  = require("./controllers/globalState")
-const {getCurrDt} = require("./wbdata/wbfunk");
+let {GlobalState,saveServerMessage}  = require("./controllers/globalState")
+const {getCurrDt, getCurrHours_Minutes} = require("./wbdata/wbfunk");
+const TaskService = require('./servise/task-service')
 const PORT = process.env.PORT ||  5005;
 const app = express()
 
@@ -33,24 +34,70 @@ const testData = [
     }
 ]
 
-function taskSchedule(arg) {
-    console.log('Проверяем работу робота' +getCurrDt());
+async function taskSchedule(arg) {
+    console.log('Проверяем работу робота ' +getCurrDt());
+    const [h,m] = getCurrHours_Minutes()
+    // После 23.50 останавливаем все задачи
+    let needStopTask = false
+    if (h>=15) if (m>=38) needStopTask = true
+
+
+    // Сначала проверим выполняются ли задачи
+    let someTaskIsWork = false
+    if ((GlobalState.loadNewProducts.onWork) || (GlobalState.deleteDuplicateID.onWork) ||
+        (GlobalState.setNoUpdateProducts.onWork) || (GlobalState.updateAllProductList.onWork)) someTaskIsWork = true
+    // console.log('someTaskIsWork = '+someTaskIsWork);
+    // console.log('needStopTask = '+needStopTask);
+    if ((someTaskIsWork) && (needStopTask)) {
+        console.log('останавливаем все задачи  ');
+        saveServerMessage('Останавливаем все задачи',getCurrDt() )
+        GlobalState.loadNewProducts.onWork = false
+        GlobalState.deleteDuplicateID.onWork = false
+        GlobalState.setNoUpdateProducts.onWork = false
+        GlobalState.updateAllProductList.onWork = false
+    }
+
+
+    if ((!someTaskIsWork) && (!needStopTask)) {
+
+
+        const needStartMainTask = await TaskService.needStartMainTask()
+        // console.log('needStartMainTask = '+needStartMainTask);
+        if (needStartMainTask){
+            console.log('Запускаем Основную задачу');
+            saveServerMessage('Запускаем Основную задачу updateAllProductList',getCurrDt() )
+            GlobalState.updateAllProductList.onWork = true
+            await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
+        } else {
+            console.log('Запускаем дополнительную задачу ');
+            saveServerMessage('Запускаем Дополнительную задачу '+GlobalState.nextCommand,getCurrDt() )
+            if (GlobalState.nextCommand === 'setNoUpdateProducts') { GlobalState.setNoUpdateProducts.onWork = true
+                await TaskService.setNoUpdateProducts()}
+            if (GlobalState.nextCommand === 'deleteDuplicateID') {GlobalState.deleteDuplicateID.onWork = true
+                await TaskService.deleteDuplicateID()}
+            if (GlobalState.nextCommand === 'loadNewProducts') {GlobalState.loadNewProducts.onWork = true
+                await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)}
+
+
+
+        }
+
+    }
+
 }
 
 const start = async () => {
     try {
         await sequelize.authenticate()
-        GlobalState.serverStartMessage = getCurrDt() + '  Сервер перезапустили'
-        GlobalState.serverState.endState = '  Сервер перезапустили'
-        GlobalState.serverState.endStateTime = getCurrDt()
+        saveServerMessage('  Сервер перезапустили', getCurrDt())
 
         await sequelize.sync()
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
 
-
-
         // Запускаем функцию проверки состояния сервера
         setInterval(taskSchedule, 1000*60, 'noArg');
+
+
 
     } catch (e) {
         console.log(e)

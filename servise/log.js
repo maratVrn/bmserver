@@ -4,7 +4,7 @@ const LOG_PARSER_IS_WORK = false
 const LOG_ERROR_IS_WORK = true
 const LOG_PARSER_FUNC_IS_WORK = true
 
-// Записываем в лог входящие цены
+
 function saveParserProductListLog (catalogId, message) {
     if (LOG_PARSER_IS_WORK) {
         const dt = new Date()
