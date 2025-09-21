@@ -39,7 +39,7 @@ async function taskSchedule(arg) {
     const [h,m] = getCurrHours_Minutes()
     // После 23.50 останавливаем все задачи
     let needStopTask = false
-    if (h>=15) if (m>=38) needStopTask = true
+    if (h>=23) if (m>=45) needStopTask = true
 
 
     // Сначала проверим выполняются ли задачи
@@ -67,8 +67,9 @@ async function taskSchedule(arg) {
             console.log('Запускаем Основную задачу');
             saveServerMessage('Запускаем Основную задачу updateAllProductList',getCurrDt() )
             GlobalState.updateAllProductList.onWork = true
-            await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
-        } else {
+            // await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
+            await TaskService.updateAllProductList(false, true)
+        } else {  
             console.log('Запускаем дополнительную задачу ');
             saveServerMessage('Запускаем Дополнительную задачу '+GlobalState.nextCommand,getCurrDt() )
             if (GlobalState.nextCommand === 'setNoUpdateProducts') { GlobalState.setNoUpdateProducts.onWork = true
@@ -77,10 +78,9 @@ async function taskSchedule(arg) {
                 await TaskService.deleteDuplicateID()}
             if (GlobalState.nextCommand === 'loadNewProducts') {GlobalState.loadNewProducts.onWork = true
                 await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)}
+        }   
 
 
-
-        }
 
     }
 
@@ -95,6 +95,7 @@ const start = async () => {
         app.listen(PORT, ()=> console.log(`Server is start ${PORT}`))
 
         // Запускаем функцию проверки состояния сервера
+        // TODO: Запустить авто работу сервера
         setInterval(taskSchedule, 1000*60, 'noArg');
 
 

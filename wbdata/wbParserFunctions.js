@@ -1,5 +1,5 @@
 const axios = require('axios-https-proxy-fix');
-const {saveParserProductListLog, saveErrorLog} = require('../servise/log')
+const {saveParserProductListLog, saveParserFuncLog, saveErrorLog} = require('../servise/log')
 const {DataTypes} = require("sequelize");
 const ProxyAndErrors = require('./proxy_and_errors')//require('../wbdata/proxy_and_errors');
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -311,7 +311,19 @@ async function PARSER_GetProductListInfo(productIdList) {
                     console.log('-------------------->   '+resData.data.products.length);
                     for (let i in resData.data.products){
                         const currProduct = resData.data.products[i]
-                        const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
+
+                        // const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
+
+                        let totalQuantity = 0
+                        for (let k in currProduct.sizes) {
+                            if (currProduct.sizes[k]?.stocks)
+                                for (let z in currProduct.sizes[k]?.stocks)
+                                    if (currProduct.sizes[k]?.stocks[z]?.qty) totalQuantity += currProduct.sizes[k]?.stocks[z]?.qty
+
+                        }
+                        // saveParserFuncLog('tmp', currProduct.id.toString()+'    '+totalQuantity.toString())
+
+
                         // Если остатков товара больше минимума 1 то сохраняем полную информацию иначе усеченную
                         if (totalQuantity > 0) {
                             // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет

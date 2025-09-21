@@ -142,7 +142,7 @@ class WbController{
 
     // НУЖНА!! Запускаем получение новых товаров
     async loadNewProducts(req, res, next) {
-
+        console.log('tut');
         try {
             GlobalState.endErrorMessage = ''
             try {

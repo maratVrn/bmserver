@@ -8,7 +8,7 @@ let GlobalState ={
     isServerWork: true,
 
     allCommands : ['loadNewProducts', 'deleteDuplicateID','setNoUpdateProducts','updateAllProductList'],
-    nextCommand : 'setNoUpdateProducts',
+    nextCommand : 'loadNewProducts',
 
 
     serverState : {
@@ -18,8 +18,8 @@ let GlobalState ={
 
     loadNewProducts : {
         onWork : false,
-        loadPageCount : 20,
-        loadOnlyNew : true,
+        loadPageCount : 25,
+        loadOnlyNew : false,
         disableButton : false,
         endState : 'Нет информации',
         endStateTime : ''
@@ -40,7 +40,7 @@ let GlobalState ={
     updateAllProductList : {
         onWork : false,
         needCalcData : false,
-        updateAll : false,
+        updateAll : true,
         endState : 'Нет информации',
         endStateTime : ''
     },

@@ -210,7 +210,9 @@ class TaskService{
             }
 
         } catch (error) { saveErrorLog('taskService',`Ошибка в loadAllNewProductList при определении задачи новая или продолжаем `)
-            saveErrorLog('taskService', error)}
+            saveErrorLog('taskService', error)
+            console.log(error);
+        }
 
         // Далее запустим процедуру  обновления по списку задач
         let taskData = [...needTask.taskData]

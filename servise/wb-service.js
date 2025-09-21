@@ -219,6 +219,16 @@ class WBService {
         return catalogData
     }
 
+    // Загружаем с БД последнюю версию лайт каталога и отпарвляем на фронт для отображения списка
+    async getLiteWBCatalog (){
+        const WBCatalog_ALL = await WBCatalog.findAll()
+        let result = []
+        WBCatalog_ALL.sort((a, b) => a.id < b.id ? -1 : 1)
+        if (WBCatalog_ALL.at(-1).catalogLite)  result = WBCatalog_ALL.at(-1).catalogLite
+        if (WBCatalog_ALL.at(-1).catalogAll)  this.allWBCatalog = WBCatalog_ALL.at(-1).catalogAll
+        return result
+    }
+
     // НУЖНА Сохраняем список всех каталогов с параметрами cat и query
     async saveCatalogDataToFile(){
         const catalogParam = await this.getCatalogData()
