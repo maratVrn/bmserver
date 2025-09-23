@@ -5,6 +5,10 @@ const CatalogService = require('../servise/catalog-service')
 const TaskService = require('../servise/task-service')
 const WordStatisticService = require('../servise/wordStatistic-service')
 
+const {PARSER_GetProductIdInfo} = require("../wbdata/wbParserFunctions");
+
+
+
 
 const {saveProductLIstToCVS, getCurrDt} = require("../wbdata/wbfunk")
 const {saveErrorLog} = require("../servise/log");
@@ -202,12 +206,13 @@ class WbController{
 
         try {
 
+            const testResult = PARSER_GetProductIdInfo(12104185)
             // const testResult  = await wbService.getWBSubjects_fromWB()
 
             // const testResult  = await ProductListService.deleteAllProductListTable()
             // const testResult  = await ProductListService.test()
 
-            const testResult  = await ProductListService.getAllProductCount(true)
+            // const testResult  = await ProductListService.getAllProductCount(true)
 
             // const testResult  = await ProductListService.deleteZeroProductListTable()
             //

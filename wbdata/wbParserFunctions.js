@@ -283,6 +283,112 @@ async function PARSER_GetProductList_SubjectsID_ToDuplicate(productIdList) {
 
     return productListInfo
 }
+async function PARSER_GetProductIdInfo(id) {
+    let data = []
+
+    let needGetData = true
+
+    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+        try {
+
+            const dt = new Date().toLocaleDateString()
+
+            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+id.toString()
+            // axios.get(url, {proxy: global.axiosProxy})
+            await axios.get(url).then(response => {
+                const resData = response.data
+                data = resData
+                if (resData.data) {
+                    console.log('-------------------->   '+resData.data.products.length);
+                    for (let i in resData.data.products){
+                        const currProduct = resData.data.products[i]
+
+                        // const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
+
+                        let totalQuantity = 0
+                        for (let k in currProduct.sizes) {
+                            if (currProduct.sizes[k]?.stocks)
+                                for (let z in currProduct.sizes[k]?.stocks)
+                                    if (currProduct.sizes[k]?.stocks[z]?.qty) totalQuantity += currProduct.sizes[k]?.stocks[z]?.qty
+
+                        }
+                        console.log(totalQuantity);
+                        // saveParserFuncLog('tmp', currProduct.id.toString()+'    '+totalQuantity.toString())
+
+
+                        // Если остатков товара больше минимума 1 то сохраняем полную информацию иначе усеченную
+                        if (totalQuantity > 0) {
+                            // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
+
+                            let price = -1
+                            for (let k in currProduct.sizes) {
+                                if (currProduct.sizes[k]?.price) {
+                                    price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product)  / 100): -1
+                                    break
+                                }
+                            }
+
+                            // Определим dtype
+                            let dtype = -1
+                            // TODO: Потом это убрать!! это надо сделать один раз при загрузке нового товара и забить и брать из описания
+                            if (currProduct.dtype) dtype = currProduct.dtype
+
+
+                            const priceHistory_tmp = []
+                            priceHistory_tmp.push({d: dt, sp: price, q:totalQuantity})
+
+                            const newProduct = {
+                                id              : currProduct?.id ? currProduct.id : 0,
+                                price           : price,
+                                reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
+                                kindId	        : currProduct.kindId ? currProduct.kindId : 0,
+                                subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
+                                brandId         : currProduct.brandId,
+                                saleCount       : 0,
+                                saleMoney       : 0,
+                                totalQuantity   : totalQuantity,
+                                priceHistory    : priceHistory_tmp,
+                                dtype           : dtype,
+                            }
+
+                            productListInfo.push(newProduct)
+                        } else {
+                            const priceHistory_tmp = []
+                            priceHistory_tmp.push({d: dt, sp: 0, q:0})
+
+                            const newProduct = {
+                                id              : currProduct?.id ? currProduct.id : 0,
+                                price           : 0,
+                                reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
+                                kindId	        : currProduct.kindId ? currProduct.kindId : 0,
+                                subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
+                                brandId         : currProduct.brandId,
+                                saleCount       : 0,
+                                saleMoney       : 0,
+                                totalQuantity   : totalQuantity,
+                                priceHistory    : priceHistory_tmp,
+                                dtype           : 0,
+                            }
+
+
+                        }
+                    }
+
+
+                }})
+            needGetData = false
+        } catch (err) {
+            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo', 'noData ')
+        }
+    }
+
+
+
+
+
+    return data
+}
+
 
 async function PARSER_GetProductListInfo(productIdList) {
 
@@ -402,5 +508,5 @@ async function PARSER_GetProductListInfo(productIdList) {
 
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_GetBrandsAndSubjectsList, PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray,
-     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductList_SubjectsID_ToDuplicate
+     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductList_SubjectsID_ToDuplicate, PARSER_GetProductIdInfo
 }
