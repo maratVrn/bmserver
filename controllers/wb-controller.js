@@ -206,13 +206,13 @@ class WbController{
 
         try {
 
-            const testResult = PARSER_GetProductIdInfo(12104185)
+            // const testResult = PARSER_GetProductIdInfo(12104185)
             // const testResult  = await wbService.getWBSubjects_fromWB()
 
             // const testResult  = await ProductListService.deleteAllProductListTable()
             // const testResult  = await ProductListService.test()
 
-            // const testResult  = await ProductListService.getAllProductCount(true)
+            const testResult  = await ProductListService.getAllProductCount(true)
 
             // const testResult  = await ProductListService.deleteZeroProductListTable()
             //

@@ -669,7 +669,7 @@ class ProductListService {
                 const endId = await this.WBCatalogProductList.count()-1
                 if (endId === -1)  saveParserFuncLog('updateServiceInfo ', 'Нулевая таблица '+productList_tableName.toString())
 
-                const step = 200_000 //process.env.PARSER_MAX_QUANTITY_SEARCH
+                const step = 100_000 //process.env.PARSER_MAX_QUANTITY_SEARCH
 
                 for (let i = 0; i <= endId; i++) {
 
@@ -723,10 +723,13 @@ class ProductListService {
                     else await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["price","totalQuantity","priceHistory"]  })
 
 
-                    // Удаляем нерабочие ИД-ки
-                    await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
-                    await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList','')))
-
+                    // // Удаляем нерабочие ИД-ки
+                    // await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                    // await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList','')))
+                    // // Сохраним список удаленных ИД для прроверки
+                    // let delArrayStr = ''
+                    // for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
+                    // saveParserFuncLog(productList_tableName.toString(), delArrayStr)
 
                 }
 

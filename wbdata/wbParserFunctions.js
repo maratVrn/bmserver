@@ -418,15 +418,15 @@ async function PARSER_GetProductListInfo(productIdList) {
                     for (let i in resData.data.products){
                         const currProduct = resData.data.products[i]
 
-                        // const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
-
-                        let totalQuantity = 0
-                        for (let k in currProduct.sizes) {
-                            if (currProduct.sizes[k]?.stocks)
-                                for (let z in currProduct.sizes[k]?.stocks)
-                                    if (currProduct.sizes[k]?.stocks[z]?.qty) totalQuantity += currProduct.sizes[k]?.stocks[z]?.qty
-
-                        }
+                        const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
+                        //
+                        // let totalQuantity = 1
+                        // for (let k in currProduct.sizes) {
+                        //     if (currProduct.sizes[k]?.stocks)
+                        //         for (let z in currProduct.sizes[k]?.stocks)
+                        //             if (currProduct.sizes[k]?.stocks[z]?.qty) totalQuantity += currProduct.sizes[k]?.stocks[z]?.qty
+                        //
+                        // }
                         // saveParserFuncLog('tmp', currProduct.id.toString()+'    '+totalQuantity.toString())
 
 
@@ -445,11 +445,12 @@ async function PARSER_GetProductListInfo(productIdList) {
                             // Определим dtype
                             let dtype = -1
                             // TODO: Потом это убрать!! это надо сделать один раз при загрузке нового товара и забить и брать из описания
-                            if (currProduct.dtype) dtype = currProduct.dtype
+                            // if (currProduct.dtype) dtype = currProduct.dtype
 
 
                             const priceHistory_tmp = []
-                            priceHistory_tmp.push({d: dt, sp: price, q:totalQuantity})
+                            if (price>0) priceHistory_tmp.push({d: dt, sp: price, q:totalQuantity})
+                                else priceHistory_tmp.push({d: dt, sp: 0, q:0})
 
                             const newProduct = {
                                 id              : currProduct?.id ? currProduct.id : 0,
@@ -462,31 +463,32 @@ async function PARSER_GetProductListInfo(productIdList) {
                                 saleMoney       : 0,
                                 totalQuantity   : totalQuantity,
                                 priceHistory    : priceHistory_tmp,
-                                dtype           : dtype,
+                                // dtype           : dtype,
                             }
 
                             productListInfo.push(newProduct)
-                        } else {
-                            const priceHistory_tmp = []
-                            priceHistory_tmp.push({d: dt, sp: 0, q:0})
-
-                            const newProduct = {
-                                id              : currProduct?.id ? currProduct.id : 0,
-                                price           : 0,
-                                reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
-                                kindId	        : currProduct.kindId ? currProduct.kindId : 0,
-                                subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
-                                brandId         : currProduct.brandId,
-                                saleCount       : 0,
-                                saleMoney       : 0,
-                                totalQuantity   : totalQuantity,
-                                priceHistory    : priceHistory_tmp,
-                                dtype           : 0,
-                            }
-
-                            productListInfo.push(newProduct)
-
                         }
+                        // else {
+                        //     const priceHistory_tmp = []
+                        //     priceHistory_tmp.push({d: dt, sp: 0, q:0})
+                        //
+                        //     const newProduct = {
+                        //         id              : currProduct?.id ? currProduct.id : 0,
+                        //         price           : 0,
+                        //         reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
+                        //         kindId	        : currProduct.kindId ? currProduct.kindId : 0,
+                        //         subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
+                        //         brandId         : currProduct.brandId,
+                        //         saleCount       : 0,
+                        //         saleMoney       : 0,
+                        //         totalQuantity   : totalQuantity,
+                        //         priceHistory    : priceHistory_tmp,
+                        //         dtype           : 0,
+                        //     }
+                        //
+                        //     productListInfo.push(newProduct)
+                        //
+                        // }
                     }
 
 

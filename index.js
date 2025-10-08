@@ -96,7 +96,8 @@ const start = async () => {
 
         // Запускаем функцию проверки состояния сервера
         // TODO: Запустить авто работу сервера
-        setInterval(taskSchedule, 1000*60, 'noArg');
+       setInterval(taskSchedule, 1000*60, 'noArg');
+
 
 
 

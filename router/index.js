@@ -30,7 +30,7 @@ router.get('/getAllProductCount', wbController.getAllProductCount)        // п�
 
 
 // ВРЕМЕННЫЕ АПИ
-router.get('/test', wbController.test)
+router.get('/wbServerTest', wbController.test)
 
 
 
