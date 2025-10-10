@@ -115,6 +115,7 @@ class WBService {
             for (let k in subjectList) {
             // if (subjectList.length>0) {
                 console.log('Загружаем для предмета '+subjectList[k].name);
+
                 productListParserResult = await PARSER_GetProductList(catalogParam, [subjectList[k]], onlyNew, pageCount)
 
                 console.log('загрузили ' + productListParserResult.length);

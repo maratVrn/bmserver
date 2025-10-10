@@ -35,7 +35,7 @@ const testData = [
 ]
 
 async function taskSchedule(arg) {
-    console.log('Проверяем работу робота ' +getCurrDt());
+
     const [h,m] = getCurrHours_Minutes()
     // После 23.50 останавливаем все задачи
     let needStopTask = false
@@ -46,6 +46,7 @@ async function taskSchedule(arg) {
     let someTaskIsWork = false
     if ((GlobalState.loadNewProducts.onWork) || (GlobalState.deleteDuplicateID.onWork) ||
         (GlobalState.setNoUpdateProducts.onWork) || (GlobalState.updateAllProductList.onWork)) someTaskIsWork = true
+    console.log('Проверяем работу робота ' +getCurrDt() + ' someTaskIsWork = '+someTaskIsWork);
     // console.log('someTaskIsWork = '+someTaskIsWork);
     // console.log('needStopTask = '+needStopTask);
     if ((someTaskIsWork) && (needStopTask)) {

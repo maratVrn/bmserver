@@ -47,7 +47,7 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
     let needGetData = true
     let needGetNextProducts = true
 
-    for (let i = 1; i <= maxPage; i++) {
+    for (let i = 1; i <= maxPage ; i++) {
         let page = i
         needGetData = true
         while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
