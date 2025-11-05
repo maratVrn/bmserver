@@ -625,22 +625,31 @@ function calcDiscount (history = []){
     let meanPrice90 = 0
     let discount = 0
     let isDataCalc = false
+    let endPrice = priceArray.at(-1)
+    let medianPrice = 0
+    let discount2 = 0
 
+    // НЕ очень верный вариант тк среднюю цену можно взвентить за счет краткосрочного выстрела
+    // if (priceArray.length >= dayCalc) {
+    //     try {
+    //         for (let i in priceArray) meanPrice90 += priceArray[i]
+    //         meanPrice90 = Math.round(meanPrice90 / priceArray.length)
+    //         if (meanPrice90 > 0) {
+    //             discount = Math.round( 100*(meanPrice90 - priceArray.at(-1))/meanPrice90)
+    //             isDataCalc = true
+    //         }
+    //     } catch (e) {}
+    // }
+
+    // Правильнее по медиане посчитать
     if (priceArray.length >= dayCalc) {
-
-        try {
-            for (let i in priceArray) meanPrice90 += priceArray[i]
-            meanPrice90 = Math.round(meanPrice90 / priceArray.length)
-            if (meanPrice90 > 0) {
-                discount = Math.round( 100*(meanPrice90 - priceArray.at(-1))/meanPrice90)
-                isDataCalc = true
-            }
-        } catch (e) {}
-
-
+        priceArray.sort(function (a, b) {return b - a;})
+        medianPrice = priceArray[Math.round(priceArray.length / 2)]
+        discount2 = Math.round(100 * (medianPrice - endPrice) / medianPrice)
+        isDataCalc = true
     }
 
-    return {isDataCalc : isDataCalc, meanPrice : meanPrice90, discount : discount}
+    return {isDataCalc : isDataCalc, meanPrice : medianPrice, discount : discount2}
 }
 
 
