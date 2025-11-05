@@ -18,7 +18,7 @@ let GlobalState ={
 
     loadNewProducts : {
         onWork : false,
-        loadPageCount : 25,
+        loadPageCount : 10,
         loadOnlyNew : false,
         disableButton : false,
         endState : 'Нет информации',

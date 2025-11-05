@@ -19,7 +19,6 @@ router.get('/loadNewProducts', wbController.loadNewProducts)
 router.get('/updateAllProductList', wbController.updateAllProductList)
 
 router.get('/deleteDuplicateID', wbController.deleteDuplicateID)         //  удаляем товары ДУБЛИКАТЫ которые по ошибке оказались не в том каталоге
-router.get('/setNoUpdateProducts', wbController.setNoUpdateProducts)     //  Установка флагов обновляем/нет
 
 
 

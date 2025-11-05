@@ -58,7 +58,6 @@ async function taskSchedule(arg) {
         GlobalState.updateAllProductList.onWork = false
     }
 
-
     if ((!someTaskIsWork) && (!needStopTask)) {
 
 
@@ -69,8 +68,9 @@ async function taskSchedule(arg) {
             saveServerMessage('Запускаем Основную задачу updateAllProductList',getCurrDt() )
             GlobalState.updateAllProductList.onWork = true
             // await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
-            await TaskService.updateAllProductList(false, true)
-        } else {  
+            await TaskService.updateAllProductList(false, false)
+        }
+        else {
             console.log('Запускаем дополнительную задачу ');
             saveServerMessage('Запускаем Дополнительную задачу '+GlobalState.nextCommand,getCurrDt() )
             if (GlobalState.nextCommand === 'setNoUpdateProducts') { GlobalState.setNoUpdateProducts.onWork = true
@@ -79,7 +79,7 @@ async function taskSchedule(arg) {
                 await TaskService.deleteDuplicateID()}
             if (GlobalState.nextCommand === 'loadNewProducts') {GlobalState.loadNewProducts.onWork = true
                 await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)}
-        }   
+        }
 
 
 

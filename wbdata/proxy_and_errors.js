@@ -98,7 +98,7 @@ class ProxyAndErrors {
             this.getNextProxy(true)
             saveErrorLog('ProxyAndErrors', funcName+' установили прокси с idx '+this.proxyId);
             if (this.proxyId<0) saveErrorLog('ProxyAndErrors', funcName+' ВАЖНО Не осталось работающих прокси!! ');
-            await delay(50);
+            await delay(500);
             needGetData = true
         }
 

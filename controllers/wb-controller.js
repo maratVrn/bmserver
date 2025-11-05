@@ -96,28 +96,6 @@ class WbController{
     }
 
 
-    // НУЖНА!! Установка флагов needUpdate
-    async setNoUpdateProducts(req, res, next) {
-
-        try {
-            GlobalState.endErrorMessage = ''
-            try {
-                GlobalState.setNoUpdateProducts.onWork = !GlobalState.setNoUpdateProducts.onWork
-                GlobalState.setNoUpdateProducts.endStateTime = getCurrDt()
-
-                if (GlobalState.setNoUpdateProducts.onWork) {
-                    GlobalState.setNoUpdateProducts.endState = ' Запускаем команду setNoUpdateProducts'
-                    saveServerMessage(' Запускаем команду setNoUpdateProducts',getCurrDt() )
-                    await TaskService.setNoUpdateProducts()
-                } else saveServerMessage(' Останавливаем команду setNoUpdateProducts',getCurrDt() )
-            } catch (e) {GlobalState.endErrorMessage = e.message}
-            res.json(GlobalState)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-
-    }
     // НУЖНА!! Запускаем обновление остатков и расчет показателей
 
     async updateAllProductList(req, res, next) {
