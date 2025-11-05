@@ -535,6 +535,115 @@ function getDataFromHistory (history, endPrice, totalQuantity, daysCount = 30, i
     return resultData
 }
 
+
+// Берем историю цен
+function getPriceFromHistory (history = [], dayCount = 30 ){
+
+
+    let startDateInBase = ''                        // С Какой даты товар в базе
+    let AllHistory = []
+
+
+    let crDate = new Date()
+    let crHistory = {}
+
+
+    // Сначала соберем полный массив цен с учетом пропусков
+    if (history?.length >0) {
+        startDateInBase = history[0].d
+        const s = startDateInBase.split('.')
+        crDate = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+        crHistory = history[0]
+        AllHistory.push({d:crHistory.d, sp: crHistory.sp})
+    }
+
+
+    for (let i =1 ; i<history.length; i++){
+
+        let needNextDay = true
+        let counter = 0
+        while (needNextDay){
+            counter++
+            crDate.setDate(crDate.getDate() + 1);
+
+            const s = history[i].d.split('.')
+            const nd = new Date(s[2]+'-'+s[1]+'-'+s[0]);
+
+
+            if (nd<crDate) needNextDay = false
+            else {
+                if (crDate.toLocaleDateString() === history[i].d) {
+
+                    crHistory = history[i]
+                    AllHistory.push({d: crHistory.d, sp: crHistory.sp > 0 ? crHistory.sp : AllHistory.at(-1).sp})
+                    needNextDay = false
+                } else {
+                    AllHistory.push({
+                        d: crDate.toLocaleDateString(),
+                        sp: crHistory.sp > 0 ? crHistory.sp : AllHistory.at(-1).sp
+                    })
+                }
+                if (counter > 365) needNextDay = false // Исключим случай если год не менялась цена
+            }
+
+
+        }
+    }
+
+    let needHistory = []
+
+    if (AllHistory.length>dayCount) needHistory = AllHistory.slice(AllHistory.length-dayCount, AllHistory.length)
+    else needHistory = AllHistory
+
+    let dateArray = []
+    let priceArray = []
+
+    for (let i in needHistory){
+        dateArray.push(needHistory[i].d)
+
+        priceArray.push(needHistory[i].sp)
+
+    }
+
+    const resultData = {
+
+        // price :productInfo.price,
+        // minPrice : minPrice,
+        // maxPrice : maxPrice,
+        // meanPrice :  Math.floor((maxPrice+minPrice)/2),
+        realDiscount : 0
+    }
+
+    return [dateArray, priceArray,  resultData]
+}
+
+// Расчет скидки
+function calcDiscount (history = []){
+    const dayCalc = 90
+    const [dateArray, priceArray,  resultData] = getPriceFromHistory(history, dayCalc)
+
+    let meanPrice90 = 0
+    let discount = 0
+    let isDataCalc = false
+
+    if (priceArray.length >= dayCalc) {
+
+        try {
+            for (let i in priceArray) meanPrice90 += priceArray[i]
+            meanPrice90 = Math.round(meanPrice90 / priceArray.length)
+            if (meanPrice90 > 0) {
+                discount = Math.round( 100*(meanPrice90 - priceArray.at(-1))/meanPrice90)
+                isDataCalc = true
+            }
+        } catch (e) {}
+
+
+    }
+
+    return {isDataCalc : isDataCalc, meanPrice : meanPrice90, discount : discount}
+}
+
+
 module.exports = {
-     getLiteWBCatalogFromData, findCatalogParamByID, getCurrHours_Minutes, saveProductLIstToCVS,  getCatalogData, getCatalogIdArray, getDataFromHistory, getCurrDt
+     getLiteWBCatalogFromData, findCatalogParamByID, getCurrHours_Minutes, saveProductLIstToCVS,  getCatalogData, getCatalogIdArray, getDataFromHistory, getCurrDt, calcDiscount
 }

@@ -40,6 +40,7 @@ let GlobalState ={
     updateAllProductList : {
         onWork : false,
         needCalcData : false,
+        needDeleteNullID : true,
         updateAll : true,
         endState : 'Нет информации',
         endStateTime : ''

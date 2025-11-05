@@ -64,39 +64,6 @@ class WBService {
 
     }
 
-    // // ПАРСИНГ Обновление списка карточек товара по по выбранной позиции в каталоге
-    // // Получаем новый список брендов и кол-ва карточек - сраниваем получаем отличия от брендов и кол-ве которые были до этого и загружаем новые товары
-    // // ВАЖНО - не учитывается инф-я если например в бренде 1 товар закончился и 1 новый появился.. тогда общее кол-во не изменится и по сути обновления
-    // // не произойдет поэтому эта лайт версия на каждый день по хорошему надо загружать полный список товаров getProductList_fromWB раз в неделю
-    // async updateProductList_fromWB (catalogId ){
-    //
-    //     try {
-    //         if (this.allWBCatalog.length === 0) await this.getLiteWBCatalog()
-    //         // Найдем параметры позиции каталога по полному списку
-    //         const catalogParam = findCatalogParamByID(catalogId, this.allWBCatalog)
-    //         // Сначала получим полный список брендов и категорий для каталога
-    //         const [brandList, subjectList] = await PARSER_GetBrandsAndSubjectsList(catalogParam)
-    //         // Получаем список брендов по которым есть изменения
-    //         const diffBradList = await ProductListService.getDiffBrandList(brandList, catalogId)
-    //         // Парсим ВБ и получаем список параметров - при этом смотрим резултат все ли запарсилось или вылетила ошибка на определенной страницы
-    //         if (diffBradList.length > 0) {
-    //             const productListParserResult = await PARSER_GetProductList(catalogParam, diffBradList)
-    //             // Сохраняем список товаров в базе данных при этом проверяем есть ли такие в базе
-    //             const newProductListId = await ProductListService.saveProductList(productListParserResult, catalogId)
-    //             // Сохраняем информацию про выбранный каталог (список ид товаров, новинки, бренды, категории)
-    //             if (newProductListId.length > 0)  await ProductListService.saveCatalogInfo(catalogId, newProductListId, brandList, subjectList)
-    //             console.log('Добавили новых товаров ' + newProductListId.length);
-    //             console.log(newProductListId);
-    //
-    //         }
-    //     } catch (error) {
-    //         saveErrorLog('wb-Service',`Ошибка в getProductList_fromWB`)
-    //         saveErrorLog('wb-Service', error)
-    //     }
-    //
-    //
-    // }
-
 
     // НУЖНА ГДОБАЛЬНАЯ ЗАДАЧА ПАРСИНГ Загрузка списка карточек товара по по выбранной позиции в каталоге
     async getProductList_fromWB (catalogParam, catalogId, onlyNew, pageCount ){

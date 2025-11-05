@@ -4,7 +4,8 @@ const {DataTypes, Op} = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require('../servise/log')
 const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo, PARSER_GetProductList_SubjectsID_ToDuplicate} = require("../wbdata/wbParserFunctions");
 const ProductIdService= require('../servise/productId-service')
-const {getDataFromHistory} = require('../wbdata/wbfunk')
+const {calcDiscount} = require('../wbdata/wbfunk')
+const {GlobalState} = require("../controllers/globalState");
 
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -13,17 +14,13 @@ class ProductListService {
 
     WBCatalogProductList = sequelize.define('test_ok',{
             id              :   {type: DataTypes.INTEGER, primaryKey: true},
-            dtype           :   {type: DataTypes.INTEGER},          // тип склада
-            needUpdate      :   {type: DataTypes.BOOLEAN},          // обновлять ли товар - остатки и др
             price           :   {type: DataTypes.INTEGER},          // максимальная цена товара
             reviewRating	:   {type: DataTypes.FLOAT},            // Рейтинг товара ПО Обзорам
             subjectId       :   {type: DataTypes.INTEGER},          // ИД Позиции в предмета
             brandId         :   {type: DataTypes.INTEGER},          // ИД Позиции в бренда
-            saleCount       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц
             totalQuantity   :   {type: DataTypes.INTEGER},          // Остатки последние
-            saleMoney       :   {type: DataTypes.INTEGER},          // Обьем продаж за последний месяц в руб
             priceHistory    :   {type: DataTypes.JSON},             // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
-
+            discount	    :   {type: DataTypes.FLOAT},            // Расчетная скидка товара
 
         },
         { createdAt: false,   updatedAt: false  }  )
@@ -75,8 +72,8 @@ class ProductListService {
                 const startCount = await this.WBCatalogProductList.count()
                 try {
                     await this.WBCatalogProductList.bulkCreate(newProductList, {
-                        updateOnDuplicate: ["dtype", "price", "reviewRating", "brandId",
-                            "saleCount", "saleMoney", "totalQuantity", "priceHistory", "subjectId"],
+                        updateOnDuplicate: [ "price", "reviewRating", "brandId",
+                            "discount",  "totalQuantity", "priceHistory", "subjectId"],
                     })
                 } catch (e) {console.log(e)
                     saveErrorLog('productListService', e)
@@ -226,9 +223,8 @@ class ProductListService {
     }
 
     // НУЖНО Колл-во всех товаров в базе в productList
-    async getAllProductCount(withNoUpdateCount = true ){
+    async getAllProductCount( ){
         let allCount = 0
-        let allCountNoUpdate = 0
         saveParserFuncLog('listServiceInfo ', 'Собираем кол-во всех товаров в   --productList-- ')
         try {
 
@@ -244,31 +240,19 @@ class ProductListService {
                         this.WBCatalogProductList.tableName = tableName.toString()
                         const count = await this.WBCatalogProductList.count()
 
-                        if (withNoUpdateCount) {
-                            const currProductList = await this.WBCatalogProductList.findAll({where: {needUpdate: false}})
-                            const noUpdateCount = currProductList.length
-                            allCountNoUpdate+=noUpdateCount
-                            saveParserFuncLog('listServiceInfo ', tableName + ' count ' + count+'   noUpdateCount  '+noUpdateCount)
-                            console.log(tableName+ ' count '+ count+'   noUpdateCount  '+noUpdateCount);
-                        } else {
+
                             saveParserFuncLog('listServiceInfo ', tableName + ' count ' + count)
                             console.log(tableName+ ' count '+ count);
-                        }
+
 
                         allCount += count
 
                     }
                 }
-            if (withNoUpdateCount) {
-                const needUpdateCount = allCount - allCountNoUpdate
-                saveParserFuncLog('listServiceInfo ', 'Общее кол-во товаров ' + allCount + '   НЕ удаляемых товаров '+allCountNoUpdate
-                    + '  Необходимо обновлять  ' + needUpdateCount)
-                console.log('Общее кол-во товаров ' + allCount + '   НЕ удаляемых товаров '+allCountNoUpdate
-                    + '  Необходимо обновлять  ' + needUpdateCount);
-            } else {
+
                 saveParserFuncLog('listServiceInfo ', 'Общее кол-во товаров ' + allCount)
                 console.log('Общее кол-во товаров ' + allCount);
-            }
+
 
         } catch (error) {
             saveErrorLog('productListService',`Ошибка в getAllProductCount`)
@@ -299,10 +283,12 @@ class ProductListService {
                         console.log('таблица --- > ' + tableName.toString());
                         allCount+=1
                         try {
-                            await sequelize.getQueryInterface().addColumn(tableName.toString(), 'needUpdate', DataTypes.BOOLEAN)
+                            await sequelize.getQueryInterface().addColumn(tableName.toString(), 'discount', DataTypes.FLOAT)
+                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'saleCount',{})
+                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'saleMoney',{})
+                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'dtype',{})
+                            await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'needUpdate',{})
 
-                            // await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'discount',{})
-                            // await sequelize.getQueryInterface().removeColumn(tableName.toString(), 'maxPrice',{})
 
                         } catch (e){saveErrorLog('productListService', e)}
 
@@ -579,11 +565,9 @@ class ProductListService {
                         id: cat2Products[i].id,
                         price: cat2Products[i].price,
                         reviewRating: cat2Products[i].reviewRating,
-                        dtype: cat2Products[i].dtype,
                         subjectId: cat2Products[i].subjectId,
                         brandId: cat2Products[i].brandId,
-                        saleCount: cat2Products[i].saleCount,
-                        saleMoney: cat2Products[i].saleMoney,
+                        discount: cat2Products[i].discount,
                         totalQuantity: cat2Products[i].totalQuantity,
                         priceHistory: cat2Products[i].priceHistory
 
@@ -665,17 +649,20 @@ class ProductListService {
                     console.log('нужно удалить ' + deleteIdArray.length);
 
                     deleteCount = deleteIdArray.length
-                    if (needCalcData)  await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["price","reviewRating","dtype","totalQuantity","saleCount","saleMoney","priceHistory"]  })
+                    if (needCalcData)  await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["price","reviewRating","totalQuantity","discount","priceHistory"]  })
                     else await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["price","totalQuantity","priceHistory"]  })
 
 
-                    // // Удаляем нерабочие ИД-ки
-                    // await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
-                    // await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList','')))
-                    // // Сохраним список удаленных ИД для прроверки
-                    // let delArrayStr = ''
-                    // for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
-                    // saveParserFuncLog(productList_tableName.toString(), delArrayStr)
+                    // Удаляем нерабочие ИД-ки
+
+                    if (GlobalState.updateAllProductList.needDeleteNullID) {
+                        await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                        await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList', '')))
+                    }
+                    // Сохраним список удаленных ИД для прроверки
+                    let delArrayStr = ''
+                    for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
+                    saveParserFuncLog(productList_tableName.toString(), delArrayStr)
 
                 }
 
@@ -708,11 +695,9 @@ class ProductListService {
                         const oneProduct = {
                             id              : allProductList[i]?.id ? allProductList[i].id : 0,
                             price           : allProductList[i]?.price ? allProductList[i].price : 0,
-                            dtype           : allProductList[i]?.dtype ? allProductList[i].dtype : 0,
                             reviewRating    : 0,
                             totalQuantity   : 0,
-                            saleMoney       : 0,
-                            saleCount       : 0,
+                            discount       : 0,
                             priceHistory    : allProductList[i]?.priceHistory ? allProductList[i]?.priceHistory : [],
                             // TODO: Добавил эти поля для отладки
                             kindId	        : allProductList[i]?.kindId ? allProductList[i].kindId : 0,
@@ -726,9 +711,6 @@ class ProductListService {
                             if (oneProduct.id === updateProductListInfo[j].id) {
 
                                 try {
-                                    // console.log('ид '+oneProduct.id);
-                                    // console.log('Было');
-                                    // console.log(oneProduct.priceHistory);
                                     const oldHistory = oneProduct.priceHistory.at(-1)
                                     // Проверим совпадают ли значения - если ДА то удалим последний элемент
                                     if (oldHistory) {
@@ -749,37 +731,16 @@ class ProductListService {
                                         oneProduct.priceHistory.push(updateProductListInfo[j]?.priceHistory[0])
                                     if ((updateProductListInfo[j]?.totalQuantity === 0) && (oldHistory.q > 0))
                                         oneProduct.priceHistory.push(updateProductListInfo[j]?.priceHistory[0])
-                                    //
-                                    // console.log('Стало');
-                                    // console.log(oneProduct.priceHistory);
-
                                     oneProduct.totalQuantity = updateProductListInfo[j]?.totalQuantity ? updateProductListInfo[j]?.totalQuantity : 0
-                                    oneProduct.dtype = updateProductListInfo[j]?.dtype>0 ? updateProductListInfo[j]?.dtype : oneProduct.dtype
                                     oneProduct.reviewRating = updateProductListInfo[j]?.reviewRating ? updateProductListInfo[j]?.reviewRating : 0
                                     oneProduct.kindId = updateProductListInfo[j]?.kindId ? updateProductListInfo[j]?.kindId : 0
 
                                     // Если нужно обновлять расчет за последние 30 дней (тк это занимает время делаем не постоянно)
                                     if (needCalcData) {
-
-                                        let isFbo =  oneProduct.dtype === 4
-                                        const saleInfo = getDataFromHistory(oneProduct.priceHistory,
-                                            updateProductListInfo[j].price, updateProductListInfo[j].totalQuantity, 30,isFbo, false )
-                                        oneProduct.saleMoney = saleInfo.totalMoney
-                                        oneProduct.saleCount = saleInfo.totalSaleQuantity
-
-                                        // TODO: тут обнаружены аномалии - обьем продаж может быть очень большим что говорит о левых записях в бд
-                                        // пока просто сохраним данные об этом ID и поставим saleMoney в опр число
-                                        if (oneProduct.saleMoney > 1_111_111_111){
-                                            oneProduct.saleMoney = 0
-                                            oneProduct.saleCount = 0
-                                            saveParserFuncLog('unomalId ', 'Аномальные данные в ID '+oneProduct.id)
-                                        }
+                                        const discountInfo = calcDiscount(oneProduct.priceHistory)
+                                        if (discountInfo.isDataCalc) oneProduct.discount =discountInfo.discount
+                                        else oneProduct.discount = 0
                                     }
-
-
-
-
-
 
                                     if (updateProductListInfo[j]?.totalQuantity > 0) {
                                         if (updateProductListInfo[j]?.price > 0) {

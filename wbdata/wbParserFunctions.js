@@ -26,12 +26,10 @@ function getWBCatalogDataFromJsonReq(data){
                 id: data[key].id ? data[key].id : -1,
                 price: price,
                 reviewRating: data[key].reviewRating ? data[key].reviewRating : -1,
-                dtype: data[key].dtype ? data[key].dtype : -1,
                 brandId: data[key].brandId ? data[key].brandId : -1,
-                saleCount : 0,
                 subjectId: data[key].subjectId ? data[key].subjectId : -1,
                 totalQuantity: data[key].totalQuantity ? data[key].totalQuantity : -1,
-                saleMoney       : 0,
+                discount       : 0,
                 priceHistory: priceHistory_tmp
 
             }
@@ -328,12 +326,6 @@ async function PARSER_GetProductIdInfo(id) {
                                 }
                             }
 
-                            // Определим dtype
-                            let dtype = -1
-                            // TODO: Потом это убрать!! это надо сделать один раз при загрузке нового товара и забить и брать из описания
-                            if (currProduct.dtype) dtype = currProduct.dtype
-
-
                             const priceHistory_tmp = []
                             priceHistory_tmp.push({d: dt, sp: price, q:totalQuantity})
 
@@ -344,11 +336,9 @@ async function PARSER_GetProductIdInfo(id) {
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
-                                saleCount       : 0,
-                                saleMoney       : 0,
+                                discount       : 0,
                                 totalQuantity   : totalQuantity,
                                 priceHistory    : priceHistory_tmp,
-                                dtype           : dtype,
                             }
 
                             productListInfo.push(newProduct)
@@ -363,11 +353,9 @@ async function PARSER_GetProductIdInfo(id) {
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
-                                saleCount       : 0,
-                                saleMoney       : 0,
+                                discount       : 0,
                                 totalQuantity   : totalQuantity,
                                 priceHistory    : priceHistory_tmp,
-                                dtype           : 0,
                             }
 
 
@@ -442,11 +430,6 @@ async function PARSER_GetProductListInfo(productIdList) {
                                 }
                             }
 
-                            // Определим dtype
-                            let dtype = -1
-                            // TODO: Потом это убрать!! это надо сделать один раз при загрузке нового товара и забить и брать из описания
-                            // if (currProduct.dtype) dtype = currProduct.dtype
-
 
                             const priceHistory_tmp = []
                             if (price>0) priceHistory_tmp.push({d: dt, sp: price, q:totalQuantity})
@@ -459,36 +442,31 @@ async function PARSER_GetProductListInfo(productIdList) {
                                 kindId	        : currProduct.kindId ? currProduct.kindId : 0,
                                 subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
                                 brandId         : currProduct.brandId,
-                                saleCount       : 0,
-                                saleMoney       : 0,
+                                discount       : 0,
                                 totalQuantity   : totalQuantity,
                                 priceHistory    : priceHistory_tmp,
-                                // dtype           : dtype,
                             }
 
                             productListInfo.push(newProduct)
                         }
-                        // else {
-                        //     const priceHistory_tmp = []
-                        //     priceHistory_tmp.push({d: dt, sp: 0, q:0})
-                        //
-                        //     const newProduct = {
-                        //         id              : currProduct?.id ? currProduct.id : 0,
-                        //         price           : 0,
-                        //         reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
-                        //         kindId	        : currProduct.kindId ? currProduct.kindId : 0,
-                        //         subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
-                        //         brandId         : currProduct.brandId,
-                        //         saleCount       : 0,
-                        //         saleMoney       : 0,
-                        //         totalQuantity   : totalQuantity,
-                        //         priceHistory    : priceHistory_tmp,
-                        //         dtype           : 0,
-                        //     }
-                        //
-                        //     productListInfo.push(newProduct)
-                        //
-                        // }
+                        else {
+                            const priceHistory_tmp = []
+                            priceHistory_tmp.push({d: dt, sp: 0, q:0})
+
+                            const newProduct = {
+                                id              : currProduct?.id ? currProduct.id : 0,
+                                price           : 0,
+                                reviewRating    : currProduct.reviewRating ? currProduct.reviewRating : 0,
+                                kindId	        : currProduct.kindId ? currProduct.kindId : 0,
+                                subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
+                                brandId         : currProduct.brandId,
+                                totalQuantity   : totalQuantity,
+                                priceHistory    : priceHistory_tmp,
+                            }
+
+                            productListInfo.push(newProduct)
+
+                        }
                     }
 
 

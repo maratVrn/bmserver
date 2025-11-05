@@ -267,6 +267,8 @@ class TaskService{
 
     // НУЖНА ОСНОВНАЯ ЗАДАЧА !!!! ОБновляем информацию по всем товарам в базе - цену и колличество
     async updateAllProductList (needCalcData = false, updateAll = true){
+
+        console.log('needCalcData = '+needCalcData);
         const taskName = 'updateAllProductList'
         let needTask = {}
         let allUpdateCount = 0
