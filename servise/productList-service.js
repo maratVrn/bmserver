@@ -21,7 +21,6 @@ class ProductListService {
             totalQuantity   :   {type: DataTypes.INTEGER},          // Остатки последние
             priceHistory    :   {type: DataTypes.JSON},             // История изменения цены Берем с первой позиции в sizes basic (БЕЗ скидки) и product	(со скидкой) - все в в ите чтобы проще хранить
             discount	    :   {type: DataTypes.FLOAT},            // Расчетная скидка товара
-   ss
         },
         { createdAt: false,   updatedAt: false  }  )
 
