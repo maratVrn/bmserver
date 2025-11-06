@@ -626,6 +626,9 @@ class ProductListService {
                             const updateProductListInfo = await PARSER_GetProductListInfo(productList)
                             const [saveResult,newSaveArray, newDeleteIdArray] = await this.update_AllProductList(currProductList,updateProductListInfo, j, end_j, needCalcData )
 
+
+
+
                             updateCount += updateProductListInfo.length
                             if (saveResult) saveArray = [...saveArray,...newSaveArray]
                             deleteIdArray = [...deleteIdArray, ...newDeleteIdArray]
@@ -659,9 +662,9 @@ class ProductListService {
                         await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList', '')))
                     }
                     // Сохраним список удаленных ИД для прроверки
-                    let delArrayStr = ''
-                    for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
-                    saveParserFuncLog(productList_tableName.toString(), delArrayStr)
+                    // let delArrayStr = ''
+                    // for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
+                    // saveParserFuncLog(productList_tableName.toString(), delArrayStr)
 
                 }
 
@@ -736,9 +739,11 @@ class ProductListService {
 
                                     // Если нужно обновлять расчет за последние 30 дней (тк это занимает время делаем не постоянно)
                                     if (needCalcData) {
+
                                         const discountInfo = calcDiscount(oneProduct.priceHistory)
                                         if (discountInfo.isDataCalc) oneProduct.discount =discountInfo.discount
                                         else oneProduct.discount = 0
+
                                     }
 
                                     if (updateProductListInfo[j]?.totalQuantity > 0) {
