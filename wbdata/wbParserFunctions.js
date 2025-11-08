@@ -68,6 +68,7 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                 needGetData = false
 
             } catch (err) {
+
                 needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetCurrProductList', 'catalogParam.shard ' + catalogParam.shard)
             }
         }
@@ -197,7 +198,8 @@ async function PARSER_GetBrandsAndSubjectsList(catalogParam, needBrands = true) 
             saveParserProductListLog(catalogParam.name, 'Получаем список категорий товаров  в каталоге')
             const url2 = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=-3390370&filters=xsubject&spp=30`
             curUrl = url2
-            await axios.get(url2, ProxyAndErrors.config ).then(response => {
+
+            await axios.get(url2, ProxyAndErrors.config).then(response => {
                 const resData = response.data
                 if (resData?.data?.filters[0]) {
                     subjectList = resData?.data?.filters[0].items

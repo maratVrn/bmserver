@@ -70,17 +70,17 @@ async function taskSchedule(arg) {
             saveServerMessage('Запускаем Основную задачу updateAllProductList',getCurrDt() )
             GlobalState.updateAllProductList.onWork = true
             // await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
-            await TaskService.updateAllProductList(false, false)
+            await TaskService.updateAllProductList(false, true)
         }
         else {
             console.log('Запускаем дополнительную задачу ');
-            saveServerMessage('Запускаем Дополнительную задачу '+GlobalState.nextCommand,getCurrDt() )
-            if (GlobalState.nextCommand === 'setNoUpdateProducts') { GlobalState.setNoUpdateProducts.onWork = true
-                await TaskService.setNoUpdateProducts()}
-            if (GlobalState.nextCommand === 'deleteDuplicateID') {GlobalState.deleteDuplicateID.onWork = true
-                await TaskService.deleteDuplicateID()}
-            if (GlobalState.nextCommand === 'loadNewProducts') {GlobalState.loadNewProducts.onWork = true
-                await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)}
+            // saveServerMessage('Запускаем Дополнительную задачу '+GlobalState.nextCommand,getCurrDt() )
+            // if (GlobalState.nextCommand === 'setNoUpdateProducts') { GlobalState.setNoUpdateProducts.onWork = true
+            //     await TaskService.setNoUpdateProducts()}
+            // if (GlobalState.nextCommand === 'deleteDuplicateID') {GlobalState.deleteDuplicateID.onWork = true
+            //     await TaskService.deleteDuplicateID()}
+            // if (GlobalState.nextCommand === 'loadNewProducts') {GlobalState.loadNewProducts.onWork = true
+            //     await TaskService.loadAllNewProductList(GlobalState.loadNewProducts.loadOnlyNew, GlobalState.loadNewProducts.loadPageCount)}
         }
 
 

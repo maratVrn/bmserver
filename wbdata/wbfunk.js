@@ -206,11 +206,15 @@ function getCatalogData (catalog){
     for (let i in catalog)
         if (!noIdCatalogInclude.includes(catalog[i]?.id)){
             let patch = ''
+            let seo = ''
             patch = '\\'+catalog[i].name
+
+            if (catalog[i].seo) seo = 'menu_redirect_subject_v2_'+catalog[i]?.id.toString()+' '+catalog[i].seo.toLowerCase()
 
             if (catalog[i]?.childs)
             for (let j in catalog[i].childs){
                 patch = '\\'+catalog[i].name +'\\'+catalog[i]?.childs[j]?.name
+                if (catalog[i].childs[j]?.seo) seo = 'menu_redirect_subject_v2_'+catalog[i]?.childs[j]?.id.toString()+' '+catalog[i].childs[j]?.seo.toLowerCase()
 
                 // Если у раздела есть дети то изем в них если нету то в самом разделе
                 const crCat =catalog[i]?.childs[j]?.childs
@@ -218,36 +222,39 @@ function getCatalogData (catalog){
 
                     for (let k in crCat){
                         patch = '\\'+catalog[i].name +'\\'+catalog[i]?.childs[j]?.name + '\\'+crCat[k].name
+                        if (crCat[k].seo) seo = 'menu_redirect_subject_v2_'+crCat[k]?.id.toString()+' '+crCat[k].seo.toLowerCase()
                         if (crCat[k].childs) {
 
                             const crCat2 = crCat[k].childs
                             for (let l in crCat2) {
                                 patch = '\\'+catalog[i].name +'\\'+catalog[i]?.childs[j]?.name + '\\'+crCat[k].name + '\\'+crCat2[l].name
+                                if (crCat2[l].seo) seo = 'menu_redirect_subject_v2_'+crCat2[l]?.id.toString()+' '+crCat2[l].seo.toLowerCase()
                                 if (crCat2[l].childs) {
                                     const crCat3 = crCat2[l].childs
                                     for (let z in crCat3) {
                                         patch = '\\'+catalog[i].name +'\\'+catalog[i]?.childs[j]?.name + '\\'+crCat[k].name + '\\'+crCat2[l].name + '\\'+crCat3[z].name
-                                        const oneData = {id: crCat3[z]?.id, catalogParam: {shard: crCat3[z].shard, query: crCat3[z].query, url:crCat3[z].url, patch:patch }  }
+                                        if (crCat3[z].seo) seo = 'menu_redirect_subject_v2_'+crCat3[z]?.id.toString()+' '+crCat3[z].seo.toLowerCase()
+                                        const oneData = {id: crCat3[z]?.id, catalogParam: {shard: crCat3[z].shard, query: crCat3[z].query, url:crCat3[z].url, patch:patch, seo : seo }  }
                                         catalogData.push(oneData)
                                         if (crCat3[z].childs) console.log(patch+ '  '+crCat3[z].childs.length);
                                     }
 
 
                                 } else {
-                                    const oneData = {id: crCat2[l]?.id, catalogParam: {shard: crCat2[l].shard, query: crCat2[l].query, url:crCat2[l].url, patch:patch}  }
+                                    const oneData = {id: crCat2[l]?.id, catalogParam: {shard: crCat2[l].shard, query: crCat2[l].query, url:crCat2[l].url, patch:patch, seo : seo}  }
                                     catalogData.push(oneData)
                                 }
                             }
 
                         }
                         else
-                            { const oneData = { id: crCat[k]?.id, catalogParam: {shard: crCat[k].shard, query: crCat[k].query, url:crCat[k].url, patch:patch} }
+                            { const oneData = { id: crCat[k]?.id, catalogParam: {shard: crCat[k].shard, query: crCat[k].query, url:crCat[k].url, patch:patch, seo : seo} }
                                 catalogData.push(oneData) }
 
                         }
 
                 } else {
-                    const oneData = { id : catalog[i]?.childs[j]?.id,  catalogParam : { shard : catalog[i].childs[j].shard, query : catalog[i].childs[j].query, url:catalog[i].childs[j].url, patch:patch} }
+                    const oneData = { id : catalog[i]?.childs[j]?.id,  catalogParam : { shard : catalog[i].childs[j].shard, query : catalog[i].childs[j].query, url:catalog[i].childs[j].url, patch:patch, seo : seo} }
                     catalogData.push(oneData)
                 }
             }

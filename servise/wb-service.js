@@ -184,6 +184,7 @@ class WBService {
         // Получаем массив - список всех позиций каталога
         if (this.allWBCatalog.length === 0) await this.getLiteWBCatalog()
         let catalogData = getCatalogData(this.allWBCatalog)  // Загрузим полный список разделов
+
         return catalogData
     }
 

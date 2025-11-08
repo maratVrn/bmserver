@@ -107,7 +107,7 @@ class ProxyAndErrors {
             console.log('Ошибка Частое подключение к серверу - меняем прокси');
             // saveErrorLog('ProxyAndErrors', funcName+'  '+funcParam+'  '+'Частое подключение к серверу')
             this.getNextProxy()
-            await delay(50);
+            await delay(300);
             needGetData = true
         }
 
