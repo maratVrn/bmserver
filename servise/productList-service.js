@@ -2,7 +2,7 @@
 const sequelize = require("../db");
 const {DataTypes, Op} = require("sequelize");
 const {saveErrorLog, saveParserFuncLog} = require('../servise/log')
-const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo, PARSER_GetProductList_SubjectsID_ToDuplicate} = require("../wbdata/wbParserFunctions");
+const {PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray, PARSER_GetIDInfo} = require("../wbdata/wbParserFunctions");
 const ProductIdService= require('../servise/productId-service')
 const {calcDiscount} = require('../wbdata/wbfunk')
 const {GlobalState} = require("../controllers/globalState");

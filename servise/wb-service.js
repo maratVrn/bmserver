@@ -4,7 +4,7 @@ const ProductListService = require('./productList-service')
 const ProductIdService = require('./productId-service')
 const axios = require('axios');
 const {findCatalogParamByID, getLiteWBCatalogFromData, getCatalogIdArray,getCatalogData} = require("../wbdata/wbfunk")
-const { PARSER_GetBrandAndCategoriesList, PARSER_GetBrandsAndSubjectsList, PARSER_GetProductList} = require("../wbdata/wbParserFunctions")
+const { PARSER_GetBrandAndCategoriesList, PARSER_GetProductList} = require("../wbdata/wbParserFunctions")
 const {saveErrorLog, saveParserFuncLog} = require("./log");
 
 
@@ -12,57 +12,6 @@ class WBService {
 
     allWBCatalog = []
 
-    // ПАРСИНГ Получаем список брендов и категорий товаров для всех разделов каталога и сохраняем в базе данных
-    // Глобаальная задача по сути мы формируем основную инфу про каталог
-    // По итогу заполняем таблицу предмет-бренд-раздел каталога которая в итоге используется для парсинга
-    async getBrandsAndSubjects_fromWB ( ){
-
-        try {
-            console.log('test');
-
-            if (this.allWBCatalog.length === 0) await this.getLiteWBCatalog()
-            // TODO: ВАЖНО Сейчас все  цифровые товары пробрасываются т.к у них shard: undefined, query: undefined,
-            // // Получим полный список ид каталога для парсинга брендов и категорий
-            const allCatalogParamArray = getCatalogIdArray(this.allWBCatalog)
-            console.log(allCatalogParamArray.length);
-
-            //
-            // const catalogParam = findCatalogParamByID(287, this.allWBCatalog)
-            // console.log(catalogParam);
-            // const [brandList, subjectList] = await PARSER_GetBrandsAndSubjectsList(catalogParam)
-            // console.log(subjectList);
-
-            // Далее в цикле получаем список брендв и категорий
-            for (let i in allCatalogParamArray){
-                console.log(i);
-                const [brandList, subjectList] = await PARSER_GetBrandsAndSubjectsList(allCatalogParamArray[i])
-                ProductListService.saveCatalogInfo(allCatalogParamArray[i].id, [], brandList, subjectList)
-                // if (i>5) break
-            }
-            console.log('********ВСЕЕЕЕ******');
-
-            // // Сначала получим полный список брендов и категорий для каталога
-            // const [brandList, subjectList] = await PARSER_GetBrandsAndSubjectsList(catalogParam)
-            // // Получаем список брендов по которым есть изменения
-            // const diffBradList = await ProductListService.getDiffBrandList(brandList, catalogId)
-            // // Парсим ВБ и получаем список параметров - при этом смотрим резултат все ли запарсилось или вылетила ошибка на определенной страницы
-            // if (diffBradList.length > 0) {
-            //     const productListParserResult = await PARSER_GetProductList(catalogParam, diffBradList)
-            //     // Сохраняем список товаров в базе данных при этом проверяем есть ли такие в базе
-            //     const newProductListId = await ProductListService.saveProductList(productListParserResult, catalogId)
-            //     // Сохраняем информацию про выбранный каталог (список ид товаров, новинки, бренды, категории)
-            //     if (newProductListId.length > 0) await ProductListService.saveCatalogInfo(catalogId, newProductListId, brandList, subjectList)
-            //     console.log('Добавили новых товаров ' + newProductListId.length);
-            //     console.log(newProductListId);
-
-            // }
-        } catch (error) {
-            saveErrorLog('wb-Service',`Ошибка в getBrandsAndSubjects_fromWB`)
-            saveErrorLog('wb-Service', error)
-        }
-
-
-    }
 
 
     // НУЖНА ГДОБАЛЬНАЯ ЗАДАЧА ПАРСИНГ Загрузка списка карточек товара по по выбранной позиции в каталоге
@@ -73,39 +22,40 @@ class WBService {
         try {
 
 
-            console.log(catalogId);
+            console.log(catalogParam);
             // Сначала получим полный список брендов и категорий для каталога
-            const [brandList, subjectList] = await PARSER_GetBrandsAndSubjectsList(catalogParam, false)
+            //TODO: Получить список предметов из базы!
+            // const [brandList, subjectList] = await PARSER_GetBrandsAndSubjectsList(catalogParam, false)
             console.log(subjectList);
-            // Парсим ВБ и получаем список параметров - при этом смотрим резултат все ли запарсилось или вылетила ошибка на определенной страницы
-            let productListParserResult = []
-            for (let k in subjectList) {
-            // if (subjectList.length>0) {
-                console.log('Загружаем для предмета '+subjectList[k].name);
-
-                productListParserResult = await PARSER_GetProductList(catalogParam, [subjectList[k]], onlyNew, pageCount)
-
-                console.log('загрузили ' + productListParserResult.length);
-
-                const [realNewProduct, mapDuplicateIdListAnother ] = await ProductIdService.viewNewProductsInfo(productListParserResult,catalogId)
-                const duplicateProducts = await ProductListService.viewNewProductsInfoToNewDuplicateProducts(mapDuplicateIdListAnother)
-
-                let AllNewProducts = [...realNewProduct];
-                realNewProductCount += realNewProduct.length
-                // console.log('Получен массив с новыми продуктами '+AllNewProducts.length);
-                AllNewProducts = [...AllNewProducts, ...duplicateProducts];
-                // console.log('Добавили дубликатов '+duplicateProducts.length);
-                duplicateProductCount += duplicateProducts.length
-                // console.log('После обработки получили массив '+AllNewProducts.length);
-                // Сохраняем список товаров в базе данных
-
-                const [idData, resCount] = await ProductListService.saveAllNewProductList_New(AllNewProducts, catalogId)
-
-                console.log('resCount = ' + resCount);
-                //  Сохраняем информацию про id-ки в отдельной таблице
-
-                if (idData.length > 0) await ProductIdService.saveIdData(idData)
-            }
+            // // Парсим ВБ и получаем список параметров - при этом смотрим резултат все ли запарсилось или вылетила ошибка на определенной страницы
+            // let productListParserResult = []
+            // for (let k in subjectList) {
+            // // if (subjectList.length>0) {
+            //     console.log('Загружаем для предмета '+subjectList[k].name);
+            //
+            //     productListParserResult = await PARSER_GetProductList(catalogParam, [subjectList[k]], onlyNew, pageCount)
+            //
+            //     console.log('загрузили ' + productListParserResult.length);
+            //
+            //     const [realNewProduct, mapDuplicateIdListAnother ] = await ProductIdService.viewNewProductsInfo(productListParserResult,catalogId)
+            //     const duplicateProducts = await ProductListService.viewNewProductsInfoToNewDuplicateProducts(mapDuplicateIdListAnother)
+            //
+            //     let AllNewProducts = [...realNewProduct];
+            //     realNewProductCount += realNewProduct.length
+            //     // console.log('Получен массив с новыми продуктами '+AllNewProducts.length);
+            //     AllNewProducts = [...AllNewProducts, ...duplicateProducts];
+            //     // console.log('Добавили дубликатов '+duplicateProducts.length);
+            //     duplicateProductCount += duplicateProducts.length
+            //     // console.log('После обработки получили массив '+AllNewProducts.length);
+            //     // Сохраняем список товаров в базе данных
+            //
+            //     const [idData, resCount] = await ProductListService.saveAllNewProductList_New(AllNewProducts, catalogId)
+            //
+            //     console.log('resCount = ' + resCount);
+            //     //  Сохраняем информацию про id-ки в отдельной таблице
+            //
+            //     if (idData.length > 0) await ProductIdService.saveIdData(idData)
+            // }
         }
         catch (error) {
             saveErrorLog('wb-Service',`Ошибка в getProductList_fromWB`)
@@ -119,8 +69,8 @@ class WBService {
     async newAllWBCatalog (data) {
 
         const catalogAll = data
-        const catalogLite = getLiteWBCatalogFromData(data)
-        const catalogInfo = []
+        const [catalogLite, catalogInfo] = getLiteWBCatalogFromData(data)
+
 
         const newAllWBCatalog = await WBCatalog.create({catalogAll,catalogLite,catalogInfo}).then( )
         if (newAllWBCatalog.id)   return newAllWBCatalog.id
@@ -190,11 +140,13 @@ class WBService {
 
     // Загружаем с БД последнюю версию лайт каталога и отпарвляем на фронт для отображения списка
     async getLiteWBCatalog (){
-        const WBCatalog_ALL = await WBCatalog.findAll()
+        const WBCatalog_ALL = await WBCatalog.findOne({
+            order: [ [ 'createdAt', 'DESC' ]],
+        })
         let result = []
-        WBCatalog_ALL.sort((a, b) => a.id < b.id ? -1 : 1)
-        if (WBCatalog_ALL.at(-1).catalogLite)  result = WBCatalog_ALL.at(-1).catalogLite
-        if (WBCatalog_ALL.at(-1).catalogAll)  this.allWBCatalog = WBCatalog_ALL.at(-1).catalogAll
+
+        if (WBCatalog_ALL.catalogLite)  result = WBCatalog_ALL.catalogLite
+        if (WBCatalog_ALL.catalogAll)  this.allWBCatalog = WBCatalog_ALL.catalogAll
         return result
     }
 

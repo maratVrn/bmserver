@@ -170,48 +170,47 @@ async function PARSER_GetIDInfo(id,subject,kind, brand) {
 }
 
 // Получаем бренд лист для выбранного каталога
-async function PARSER_GetBrandsAndSubjectsList(catalogParam, needBrands = true) {
-    let brandList = []
+async function PARSER_SubjectsList(catalogParam) {
+
     let subjectList = []
     let needGetData = true
     let curUrl = ''
     while (needGetData) {
         try {
-            if (needBrands) {
-                // Загрузим Список брендов
-                saveParserProductListLog(catalogParam.name, 'Получаем бренды в каталоге')
-                const url = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=-3390370&filters=ffbrand&spp=30`
-                curUrl = url
-                saveParserProductListLog(catalogParam.name, `Начинаем загрузку брендов по ссылке: ` + url)
-                await axios.get(url, ProxyAndErrors.config).then(response => {
-                    const resData = response.data
-                    if (resData?.data?.filters[0]) {
-                        brandList = resData?.data?.filters[0].items
-                        let brandCount = brandList.length ? brandList.length : 0
-                        saveParserProductListLog(catalogParam.name, 'Бренды успешно загруженны, колличество брендов ' + brandCount.toString())
-                    }
-                    needGetData = false
-                })
-            }
-            // Загрузим Список категорий товаров
+              // Загрузим Список категорий товаров
             needGetData = true
-            saveParserProductListLog(catalogParam.name, 'Получаем список категорий товаров  в каталоге')
-            const url2 = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v6/filters?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=-3390370&filters=xsubject&spp=30`
+            const seo2 = catalogParam.searchQuery ? catalogParam.searchQuery : ''
+            const shard = catalogParam.shard ? catalogParam.shard : ''
+            let url2 = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?dest=-1255987&filters=ffsubject&query=${seo2}&resultset=filters`
+            if (seo2 === ''){
+                url2 = `https://www.wildberries.ru/__internal/u-catalog/catalog/${shard}/v8/filters?appType=1&cat=${catalogParam.id}&dest=-1255987&filters=ffsubject`
+                if (shard === '') needGetData = false
+            }
+
+
+            url2 = encodeURI(url2)
             curUrl = url2
 
-            await axios.get(url2, ProxyAndErrors.config).then(response => {
+            if (needGetData) await axios.get(url2).then(response => {
                 const resData = response.data
-                if (resData?.data?.filters[0]) {
-                    subjectList = resData?.data?.filters[0].items
-                    let subjectCount = subjectList.length ? subjectList.length : 0
+
+                if (resData?.data?.filters)
+                for (let i in resData?.data?.filters)
+                if (resData?.data?.filters[i].key === 'xsubject')
+                {
+                    subjectList = resData?.data?.filters[i].items
+                    break
                 }
+
                 needGetData = false
             })
         } catch (err) {
-            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetBrandsAndSubjectsList', 'catalogParam.name ' + catalogParam.name)
+            console.log(err.code);
+            // needGetData = false
+            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_SubjectsList', 'catalogParam.id ' + catalogParam.id)
         }
     }
-    return [brandList, subjectList]
+    return subjectList
 }
 
 
@@ -241,48 +240,6 @@ async function PARSER_GetProductListInfoAll_fromIdArray(need_ProductIDInfo) {
 }
 
 
-// УЖЕ НУЖНАЖ Собираем информацию по предметам какие реально SubjectsID сейчас
-async function PARSER_GetProductList_SubjectsID_ToDuplicate(productIdList) {
-
-    let productListInfo = []
-    let needGetData = true
-    let productListStr = ''
-    for (let i in productIdList) {
-        if (i>0) productListStr += ';'
-        productListStr += parseInt(productIdList[i]).toString()
-    }
-    while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
-        try {
-            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
-            await axios.get(url, ProxyAndErrors.config).then(response => {
-                const resData = response.data
-
-                if (resData.data) {
-                    console.log('-------------------->   '+resData.data.products.length);
-                    for (let i in resData.data.products){
-                        const currProduct = resData.data.products[i]
-                        const newProduct = {
-                            id              : currProduct?.id ? currProduct.id : 0,
-                            subjectId       : currProduct.subjectId ? currProduct.subjectId : 0,
-                        }
-                        productListInfo.push(newProduct)
-
-                    }
-
-
-                }})
-            needGetData = false
-        } catch (err) {
-            needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductList_SubjectsID_ToDuplicate', 'noData ')
-        }
-    }
-
-
-
-
-
-    return productListInfo
-}
 async function PARSER_GetProductIdInfo(id) {
     let data = []
 
@@ -489,6 +446,6 @@ async function PARSER_GetProductListInfo(productIdList) {
 
 
 module.exports = {
-    PARSER_GetBrandAndCategoriesList, PARSER_GetBrandsAndSubjectsList, PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray,
-     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductList_SubjectsID_ToDuplicate, PARSER_GetProductIdInfo
+    PARSER_GetBrandAndCategoriesList, PARSER_SubjectsList, PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray,
+     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductIdInfo
 }

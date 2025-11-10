@@ -12,87 +12,7 @@ function getCurrHours_Minutes ()  {
 }
 
 
-async function saveProductLIstInfoToCVS(productList,productListInfo ){
 
-
-    let filteredNumbers =  [].concat(productList);
-    let jsonData = ''
-    let jsonDataNull = ''
-
-    // Подготовим списки на сохранение данных
-    for (let i in productListInfo){
-        //  получим список ид на которые не нашлось информации
-        filteredNumbers = filteredNumbers.filter((id) => id !== parseInt(productListInfo[i].id));
-        const addLine = productListInfo[i].id+'\t'+productListInfo[i].subjectId+'\t'+ productListInfo[i].totalQuantity+`\n`
-
-        if (parseInt(productListInfo[i].totalQuantity)>process.env.MIN_TOTAL_QUANTITY) jsonData += addLine // Если кол-во больше нуля то это живая карточка товара
-            else jsonDataNull += addLine // Если меньше то неактивная
-
-    }
-
-    const fs = require('fs');
-
-    // Сохраним живые карточки товаров
-    const productFileName = "products.cvs"
-    fs.stat( productFileName, (error, stats) => {
-        // fs.appendFileSync(productFileName + ".cvs", header, function(err) { })
-        fs.appendFileSync(productFileName + ".cvs", jsonData, function(err) { if (err) {   console.log(err);}  });
-    })
-
-    // Сохраним карточки с нулевыми остатками
-    const productFileNameNull = "productsNull.cvs"
-    fs.stat( productFileNameNull, (error, stats) => {
-        // fs.appendFileSync(productFileNameNull + ".cvs", header, function(err) { })
-        fs.appendFileSync(productFileNameNull + ".cvs", jsonDataNull, function(err) { if (err) {   console.log(err);}  });
-    })
-
-    // Сохраним не используемые ид
-    const productFileNameNoId = "productsNoId.cvs"
-    fs.stat( productFileNameNoId, (error, stats) => {
-
-        fs.appendFileSync(productFileNameNoId + ".cvs", filteredNumbers.toString()+',', function(err) { if (err) {   console.log(err);}  });
-    })
-
-
-}
-
-
-// Сохранение данных в файлу при загрузке данных
-async function saveProductListToCVSFromLoadData(data, fName, brandName){
-    const fileName = fName + '.cvs'
-
-    let jsonData = ''
-
-
-    for (var key in data)
-        // TODO: Тут руслан просил только те кто не со склада вб выгрузить поэтому не все сохраняет
-        if (parseInt(data[key].dtype) !== 2)
-            jsonData += data[key].id+'\t'+data[key].subjectId+'\t'+ data[key].dtype+'\t'+data[key].promoTextCard  +'\t'+
-                    parseInt(data[key].priceU)+'\t'+data[key].sale+'\t'+ parseInt(data[key].salePriceU) +`\n`
-
-
-    // jsonData += data[key].id+'\t'+data[key].name+'\t'+ parseInt(data[key].priceU)+'\t'+data[key].sale+'\t'+ parseInt(data[key].salePriceU)+
-        //     '\t' + data[key].dtype+'\t'+data[key].brandId+'\t'+brandName+'\t'+data[key].subjectId+'\t'+data[key].totalQuantity+`\n`
-
-    fs.stat(String(fileName), (error, stats) => {
-       try {
-           stats.isFile()
-       } catch {
-           // const header = `id (Артикул)\tНазвание\tЦена\tЦена со скидкой\tСкидка\tdtype\tbrandId\tБрэнд\tsubjectId\ttotalQuantity\n`
-           const header = `id товара\tid предмета\tdtype\tАкция\tЦена\tЦена со скидкой\tСкидка\n`
-
-           fs.appendFileSync(String(fileName) , header, function(err) {
-
-           })
-       }
-
-        fs.appendFileSync(String(fileName),  jsonData, function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
-    })
-}
 async function saveProductLIstToCVS(data, fName, dtype){
 
     const fs = require('fs');
@@ -136,49 +56,39 @@ async function saveProductLIstToCVS(data, fName, dtype){
 
 
 // Подготоваливаем лайт верисю каталога для быстрой передачи на фронт
+function getCatalogChilds(data) {
+
+    const name =  data?.name?  data?.name : ''
+    const id =  data?.id?  data?.id : 0
+    const searchQuery =  data?.searchQuery?  data?.searchQuery : ''
+    const shard =  data?.shard?  data?.shard : ''
+    let catArray = []
+    let catData = { id: id,  name : name,  childs: [], searchQuery : searchQuery, shard : shard}
+    if (data?.childs) {
+        if (data?.childs.length > 0) {
+            for (let j in data.childs) {
+                const [chData, crCatArray] = getCatalogChilds(data.childs[j])
+                catArray = [...catArray, ...crCatArray]
+                catData.childs.push(chData)
+            }
+        } else catArray.push(catData)
+
+    } else  catArray.push(catData)
+
+    return [catData, catArray]
+}
+
 function getLiteWBCatalogFromData(data) {
     const rezult = []
       // Список разделов который не включаем в лайт каталог типа Сертификаты , экспрес доставка и Путешествия, тренд
-
+    let catArray = []
     for (let i in data) {
         if (!noIdCatalogInclude.includes(data[i]?.id)) {
-            const d1 = { id: data[i]?.id,  name : data[i]?.name,  childs: [] }
 
-            if (data[i]?.childs)
-                for (let j in data[i].childs){
-                    const crCat2 = data[i].childs[j]
-                    const d2 = {  id: crCat2?.id,  name : crCat2?.name, childs: [] }
+            const [chData, crCatArray] = getCatalogChilds(data[i])
+            catArray = [...catArray, ...crCatArray]
 
-                    if (crCat2.childs){
-
-                        for (let k in data[i].childs[j].childs){
-                            const crCat3 = data[i].childs[j].childs[k]
-                            const d3 = {   id: crCat3?.id,  name : crCat3?.name, childs: []  }
-
-                            if(crCat3.childs) {
-                                for (let l in data[i].childs[j].childs[k].childs) {
-                                    const crCat4 = data[i].childs[j].childs[k].childs[l]
-                                    const d4 = {id: crCat4?.id, name: crCat4?.name, childs: []}
-
-                                    if(crCat4.childs) {
-
-                                        for (let z in crCat4.childs) {
-                                            const crCat5 = crCat4.childs[z]
-                                            const d5 = {id: crCat5?.id, name: crCat5?.name}
-                                            d4.childs.push(d5)
-                                        }
-                                    }
-
-                                    d3.childs.push(d4)
-                                }
-                            }
-
-                            d2.childs.push(d3)   }
-
-                    }
-                    d1.childs.push(d2)
-                }
-            rezult.push(d1)
+            rezult.push(chData)
 
         }
 
@@ -186,7 +96,7 @@ function getLiteWBCatalogFromData(data) {
 
 
 
-    return rezult
+    return [rezult, catArray]
 }
 
 // Собираем ID по списку каталогов чтобы использовать для бытсрого поиска в дальнейшем
@@ -543,87 +453,6 @@ function getDataFromHistory (history, endPrice, totalQuantity, daysCount = 30, i
 }
 
 
-// Берем историю цен
-function getPriceFromHistory (history = [], dayCount = 30 ){
-
-
-    let startDateInBase = ''                        // С Какой даты товар в базе
-    let AllHistory = []
-
-
-    let crDate = new Date()
-    let crHistory = {}
-
-
-    // Сначала соберем полный массив цен с учетом пропусков
-    if (history?.length >0) {
-        startDateInBase = history[0].d
-        const s = startDateInBase.split('.')
-        crDate = new Date(s[2]+'-'+s[1]+'-'+s[0]);
-        crHistory = history[0]
-        AllHistory.push({d:crHistory.d, sp: crHistory.sp})
-    }
-
-
-    for (let i =1 ; i<history.length; i++){
-
-        let needNextDay = true
-        let counter = 0
-        while (needNextDay){
-            counter++
-            crDate.setDate(crDate.getDate() + 1);
-
-            const s = history[i].d.split('.')
-            const nd = new Date(s[2]+'-'+s[1]+'-'+s[0]);
-
-
-            if (nd<crDate) needNextDay = false
-            else {
-                if (crDate.toLocaleDateString() === history[i].d) {
-
-                    crHistory = history[i]
-                    AllHistory.push({d: crHistory.d, sp: crHistory.sp > 0 ? crHistory.sp : AllHistory.at(-1).sp})
-                    needNextDay = false
-                } else {
-                    AllHistory.push({
-                        d: crDate.toLocaleDateString(),
-                        sp: crHistory.sp > 0 ? crHistory.sp : AllHistory.at(-1).sp
-                    })
-                }
-                if (counter > 365) needNextDay = false // Исключим случай если год не менялась цена
-            }
-
-
-        }
-    }
-
-    let needHistory = []
-
-    if (AllHistory.length>dayCount) needHistory = AllHistory.slice(AllHistory.length-dayCount, AllHistory.length)
-    else needHistory = AllHistory
-
-    let dateArray = []
-    let priceArray = []
-
-    for (let i in needHistory){
-        dateArray.push(needHistory[i].d)
-
-        priceArray.push(needHistory[i].sp)
-
-    }
-
-    const resultData = {
-
-        // price :productInfo.price,
-        // minPrice : minPrice,
-        // maxPrice : maxPrice,
-        // meanPrice :  Math.floor((maxPrice+minPrice)/2),
-        realDiscount : 0
-    }
-
-    return [dateArray, priceArray,  resultData]
-}
-
 function getPriceFromHistoryLight (history = [], dayCount = 30 ){
 
 
@@ -715,5 +544,5 @@ function calcDiscount (history = []){
 
 
 module.exports = {
-     getLiteWBCatalogFromData, findCatalogParamByID, getCurrHours_Minutes, saveProductLIstToCVS,  getCatalogData, getCatalogIdArray, getDataFromHistory, getCurrDt, calcDiscount
+     getLiteWBCatalogFromData, findCatalogParamByID, getCurrHours_Minutes, saveProductLIstToCVS,  getCatalogData, getCatalogIdArray, getCurrDt, calcDiscount
 }

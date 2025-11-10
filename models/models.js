@@ -13,10 +13,9 @@ const WBCatalog = sequelize.define('wbCatalog',{
 
 //Список всех категорий товаров
 const WBAllSubjects = sequelize.define('AllSubjects',{
-        id:{type: DataTypes.INTEGER, primaryKey: true},  // Соответсвует subjectId
-        name :{type: DataTypes.STRING},                  // Имя
-        catalogId:{type: DataTypes.INTEGER}              // Ид каталога в который входит данная категория товара
-
+        catalogId:{type: DataTypes.INTEGER, primaryKey: true},      // Соответсвует catalogId таблицы
+        subjects :{type: DataTypes.JSON},                           // предметы
+        addFilters :{type: DataTypes.JSON},                           // Доп фильтры, сейчас цены мин и макс
     },
     { createdAt: false, updatedAt: false })
 
@@ -45,50 +44,10 @@ const WBAllSubjects = sequelize.define('AllSubjects',{
 //     refreshToken:{type: DataTypes.STRING}
 //     }
 // )
-//
-// // Список стратегий
-// const Strategy = sequelize.define('strategy',{
-//         id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-//         name:{type: DataTypes.STRING,defaultValue: ""},
-//         points:{type: DataTypes.JSON}
-//     }
-// )
-//
-// // Данные по стратегиям
-// const StrategyData = sequelize.define('strategy_data',{
-//         id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-//         year:{type: DataTypes.INTEGER,defaultValue: 0},
-//         strategyName:{type: DataTypes.STRING, defaultValue: ""},
-//         ticketData:{type: DataTypes.JSON},
-//         dealsData:{type: DataTypes.JSON},
-//         profitData:{type: DataTypes.JSON},
-//         aboutData:{type: DataTypes.JSON}
-//     }
-// )
-//
-// // Список потрфельных стратегий
-// const Briefcase = sequelize.define('briefcase',{
-//         id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-//         name:{type: DataTypes.STRING,defaultValue: ""},
-//         userId:{type: DataTypes.INTEGER, defaultValue:0},   // Пользователь который создал портфель
-//         strategyIn:{type: DataTypes.STRING,defaultValue: ""},  // Какие стратегии входят в портфель - перечеь Имен стратегий через запятую!!!
-//         aboutData:{type: DataTypes.JSON}                     // Описание портфеля
-//     }
-// )
-//
-// // Данные по портфелю
-// const BriefcaseData = sequelize.define('briefcase_data',{
-//             id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-//             briefcaseID:{type: DataTypes.INTEGER, defaultValue: 0},
-//             year:{type: DataTypes.INTEGER,defaultValue: 0},
-//             dealsData:{type: DataTypes.JSON},               // Сделки по портфелю
-//             profitData:{type: DataTypes.JSON},              // График доходности
-//             aboutData:{type: DataTypes.JSON}                // Описание
-//     }
-// )
+
 
 module.exports = {
-    // Users, UserToken, Strategy,StrategyData, Briefcase, BriefcaseData
+
     WBCatalog,   WBAllSubjects
 }
 

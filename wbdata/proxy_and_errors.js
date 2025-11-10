@@ -69,8 +69,8 @@ class ProxyAndErrors {
     async view_error (err, funcName, funcParam){
         let needGetData = false
 
-        let timeAddWord = '1 мин'
-        let timeAddMs = 1000*60
+        let timeAddWord = '10 сек'
+        let timeAddMs = 1000*10
 
         // Временно не доступен сайт ВБ
         if (err.code === 'ECONNRESET') {

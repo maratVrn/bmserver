@@ -196,9 +196,9 @@ class WbController{
             //
             // const testResult  = await TaskService.loadAllNewProductList(true, 20)
             // const testResult  = await wbService.getWBCatalog_fromWB()
-            const testResult  = await ProductListService.migrationALLToNewTableName()
+            // const testResult  = await ProductListService.migrationALLToNewTableName()
 
-            // const testResult  = await wbService.saveCatalogDataToFile()
+            const testResult  = await CatalogService.test()
 
 
             // const testResult  = 'isOk'

@@ -219,9 +219,9 @@ class TaskService{
         let taskData = [...needTask.taskData]
         let allAddCount = 0
         for (let i in taskData){
-            // if (!taskData[i].tableTaskEnd) try {
-            //
-            //     const [realNewProductCount, duplicateProductCount]  = await WBService.getProductList_fromWB(taskData[i].cParam.catalogParam, taskData[i].cParam.id,onlyNew, pageCount)
+            if (!taskData[i].tableTaskEnd) try {
+
+                const [realNewProductCount, duplicateProductCount]  = await WBService.getProductList_fromWB(taskData[i].cParam.catalogParam, taskData[i].cParam.id,onlyNew, pageCount)
             //     allAddCount += realNewProductCount
             //     let crMess = '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+' Новые = '+realNewProductCount+
             //     '  Дубли = '+duplicateProductCount
@@ -240,10 +240,10 @@ class TaskService{
             //     await delay(0.03 * 60 * 1000)
             //     if (!GlobalState.loadNewProducts.onWork) break
             //
-            // } catch(error) {
-            //     saveErrorLog('taskService',`Ошибка в loadAllNewProductList при обновлении таблицы `+taskData[i].tableName)
-            //     saveErrorLog('taskService', error)
-            // }
+            } catch(error) {
+                saveErrorLog('taskService',`Ошибка в loadAllNewProductList при обновлении таблицы `+taskData[i].tableName)
+                saveErrorLog('taskService', error)
+            }
 
             break
 
