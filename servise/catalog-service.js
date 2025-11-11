@@ -1,16 +1,41 @@
 
 const {saveErrorLog} = require("./log");
 const {WBCatalogInfo, WBAllSubjects, WBCatalog} = require("../models/models");
-const {DataTypes} = require("sequelize");
 const {PARSER_SubjectsList} = require("../wbdata/wbParserFunctions");
 class CatalogService{
 
     async test (){
+        await this.updateAllSubjects_inBD()
+      return ' test ok'
+
+        // const WBCatalog_ALL = await WBCatalog.findOne({
+        //     order: [ [ 'createdAt', 'DESC' ]],
+        // })
+        // if (WBCatalog_ALL.catalogInfo) {
+        //
+        //     for (let i = 0; i < WBCatalog_ALL.catalogInfo.length; i++) {
+        //
+        //         const curId = WBCatalog_ALL.catalogInfo[i].id
+        //         if (curId === 131113) {
+        //             const subjects = await PARSER_SubjectsList(WBCatalog_ALL.catalogInfo[i])
+        //             console.log(subjects);
+        //             await WBAllSubjects.bulkCreate([{
+        //                 catalogId: curId,
+        //                 subjects: subjects,
+        //                 addFilters: []
+        //             }], {updateOnDuplicate: ["subjects", 'addFilters']}).then()
+        //
+        //         }
+        //     }
+        // }
+        // return 'updateAllSubjects_inBD isOk '
+
+    }
+    // Формируем список категорий по
+    async updateAllSubjects_inBD (){
         const WBCatalog_ALL = await WBCatalog.findOne({
             order: [ [ 'createdAt', 'DESC' ]],
         })
-
-
         if (WBCatalog_ALL.catalogInfo) {
 
             for (let i = 0; i < WBCatalog_ALL.catalogInfo.length; i++){
@@ -26,15 +51,15 @@ class CatalogService{
                     }
                 if (!isDuplicate) {
 
-                        // const oneC = await WBAllSubjects.findOne({where: {catalogId: curId}})
-                        // if (oneC.subjects.length === 0) {
-                        //     const subjects = await PARSER_SubjectsList(WBCatalog_ALL.catalogInfo[i])
-                        //     await WBAllSubjects.bulkCreate([{
-                        //         catalogId: curId,
-                        //         subjects: subjects,
-                        //         addFilters: []
-                        //     }], {updateOnDuplicate: ["subjects", 'addFilters']}).then()
-                        // }
+                    // const oneC = await WBAllSubjects.findOne({where: {catalogId: curId}})
+                    // if (oneC.subjects.length === 0) {
+                    //     const subjects = await PARSER_SubjectsList(WBCatalog_ALL.catalogInfo[i])
+                    //     await WBAllSubjects.bulkCreate([{
+                    //         catalogId: curId,
+                    //         subjects: subjects,
+                    //         addFilters: []
+                    //     }], {updateOnDuplicate: ["subjects", 'addFilters']}).then()
+                    // }
                     const subjects = await PARSER_SubjectsList(WBCatalog_ALL.catalogInfo[i])
                     await WBAllSubjects.bulkCreate([{
                         catalogId: curId,
@@ -42,48 +67,21 @@ class CatalogService{
                         addFilters: []
                     }], {updateOnDuplicate: ["subjects", 'addFilters']}).then()
                 }
-
-
                 // break
             }
-
         }
-
+        return 'updateAllSubjects_inBD isOk '
     }
-    // // Формируем список категорий по
-    // async updateAllSubjects_inBD (){
-    //     let testResult = ['fefe']
-    //     console.log('tutu');
-    //     const allCatalogInfo = await WBCatalogInfo.findAll()
-    //     let allSubjects = []
-    //     for (let i in allCatalogInfo) {
-    //
-    //         for (let k in allCatalogInfo[i].subjectList){
-    //             let oneData = {
-    //                 id   : allCatalogInfo[i].subjectList[k].id,
-    //                 name : allCatalogInfo[i].subjectList[k].name,
-    //                 catalogId   : allCatalogInfo[i].id
-    //             }
-    //             allSubjects.push(oneData)
-    //         }
-    //         // if (i>2) break
-    //     }
-    //
-    //     for (let i in allSubjects) {
-    //         try {
-    //             const isIn = await WBAllSubjects.findOne({where: {id: allSubjects[i].id}})
-    //             if (!isIn) await WBAllSubjects.create(allSubjects[i])
-    //         } catch (error) {
-    //             saveErrorLog('productListService',`Ошибка в WBAllSubjects.create при subjectId `+allSubjects[i].id)
-    //             saveErrorLog('productListService', error)
-    //
-    //         }
-    //     }
-    //     console.log('isOk');
-    //     return testResult
-    // }
 
+    // Формируем список категорий по
+    async getCatalogSubjectsFromDB (id){
+        let result = []
+        const oneC = await WBAllSubjects.findOne({where: {catalogId: id}})
 
+        if (oneC.subjects) result = oneC.subjects
+
+        return result
+    }
 }
 
 module.exports = new CatalogService()

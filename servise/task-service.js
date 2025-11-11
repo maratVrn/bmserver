@@ -197,7 +197,7 @@ class TaskService{
                 GlobalState.loadNewProducts.endStateTime = getCurrDt()
             } else {
 
-                const catalogParam = await WBService.getCatalogData()
+                const catalogParam = await WBService.getCatalogInfo()
                 for (let i in catalogParam) {
                     const oneTaskData = { cParam: catalogParam[i],  tableTaskEnd: false,    tableTaskResult: '' }
                     currTask.taskData.push(oneTaskData)
@@ -220,26 +220,26 @@ class TaskService{
         let allAddCount = 0
         for (let i in taskData){
             if (!taskData[i].tableTaskEnd) try {
+                const [realNewProductCount, duplicateProductCount] = await WBService.getProductList_fromWB(taskData[i].cParam, onlyNew, pageCount)
 
-                const [realNewProductCount, duplicateProductCount]  = await WBService.getProductList_fromWB(taskData[i].cParam.catalogParam, taskData[i].cParam.id,onlyNew, pageCount)
-            //     allAddCount += realNewProductCount
-            //     let crMess = '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+' Новые = '+realNewProductCount+
-            //     '  Дубли = '+duplicateProductCount
-            //
-            //     GlobalState.loadNewProducts.endState = crMess
-            //     GlobalState.loadNewProducts.endStateTime = getCurrDt()
-            //
-            //     crMess += '  shard:'+taskData[i].cParam.catalogParam.shard+'  query:'+taskData[i].cParam.catalogParam.query
-            //
-            //     saveParserFuncLog('taskService ', crMess)
-            //
-            //     taskData[i].tableTaskEnd = true
-            //     taskData[i].tableTaskResult = realNewProductCount.toString()
-            //     await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
-            //
-            //     await delay(0.03 * 60 * 1000)
-            //     if (!GlobalState.loadNewProducts.onWork) break
-            //
+                allAddCount += realNewProductCount
+                let crMess = '  --- Загрузили данные для каталога  '+i +'  id : '+ taskData[i].cParam.id+' Новые = '+realNewProductCount+
+                '  Дубли = '+duplicateProductCount
+
+                GlobalState.loadNewProducts.endState = crMess
+                GlobalState.loadNewProducts.endStateTime = getCurrDt()
+
+                // crMess += '  id:'+taskData[i].cParam.id+'  name:'+taskData[i].cParam.name
+                //
+                // saveParserFuncLog('taskService ', crMess)
+
+                taskData[i].tableTaskEnd = true
+                taskData[i].tableTaskResult = realNewProductCount.toString()
+                await this.AllTask.update({taskData: taskData,}, {where: {id: needTask.id,},})
+
+                await delay(0.03 * 60 * 1000)
+                if (!GlobalState.loadNewProducts.onWork) break
+
             } catch(error) {
                 saveErrorLog('taskService',`Ошибка в loadAllNewProductList при обновлении таблицы `+taskData[i].tableName)
                 saveErrorLog('taskService', error)

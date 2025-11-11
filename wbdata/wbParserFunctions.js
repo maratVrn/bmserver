@@ -33,7 +33,8 @@ function getWBCatalogDataFromJsonReq(data){
                 priceHistory: priceHistory_tmp
 
             }
-            currData.push(jsonData)
+            // Таким образом уходим от добавления в базу ресейла и разовых товаров
+            if (jsonData.totalQuantity>1) currData.push(jsonData)
         } catch (err) {}
     }
     return currData
@@ -51,14 +52,26 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
         while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
             try {
 
-                const url2 = `https://catalog.wb.ru/catalog/${catalogParam.shard}/v2/catalog?ab_testing=false&appType=1&${catalogParam.query}&curr=rub&dest=12358291&hide_dtype=10&lang=ru&page=${page}&sort=${sort}&spp=30&xsubject=${subjectID}`
+                const seo2 = catalogParam.searchQuery ? catalogParam.searchQuery : ''
+                const shard = catalogParam.shard ? catalogParam.shard : ''
+                let url2 = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?page=${page}&resultset=catalog&sort=${sort}&dest=-1255987&query=${seo2}&xsubject=${subjectID}`
 
-                await axios.get(url2, ProxyAndErrors.config).then(response => {
-                    const resData = response.data
+                // if (seo2 === ''){
+                //     url2 = `https://www.wildberries.ru/__internal/u-catalog/catalog/${shard}/v8/filters?appType=1&cat=${catalogParam.id}&dest=-1255987&filters=ffsubject`
+                //     if (shard === '') needGetData = false
+                // }
 
-                    if (resData?.data?.products) {
 
-                        const products = getWBCatalogDataFromJsonReq(resData.data.products)
+                url2 = encodeURI(url2)
+
+                // console.log(url2);
+
+                if (needGetData) await axios.get(url2).then(response => {
+                    const resData = response.data.products
+
+                    if (resData) {
+
+                        const products = getWBCatalogDataFromJsonReq(resData)
                         if (products.length < 100) needGetNextProducts = false
                         console.log('Страница ' + page + ' -->  Забрали продуктов :' + products.length);
                         currProductList = [...currProductList, ...products]
@@ -68,7 +81,8 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                 needGetData = false
 
             } catch (err) {
-
+                console.log(err);
+                console.log(err);
                 needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetCurrProductList', 'catalogParam.shard ' + catalogParam.shard)
             }
         }
@@ -169,7 +183,7 @@ async function PARSER_GetIDInfo(id,subject,kind, brand) {
     return catalogId
 }
 
-// Получаем бренд лист для выбранного каталога
+// Получаем список предметов для выбранного каталога
 async function PARSER_SubjectsList(catalogParam) {
 
     let subjectList = []
@@ -186,7 +200,7 @@ async function PARSER_SubjectsList(catalogParam) {
                 url2 = `https://www.wildberries.ru/__internal/u-catalog/catalog/${shard}/v8/filters?appType=1&cat=${catalogParam.id}&dest=-1255987&filters=ffsubject`
                 if (shard === '') needGetData = false
             }
-
+            console.log(url2);
 
             url2 = encodeURI(url2)
             curUrl = url2

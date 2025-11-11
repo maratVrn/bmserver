@@ -70,8 +70,8 @@ class WbController{
     async getWBSubjects_fromWB (req, res, next) {
 
         try {
-            const allWBCatalog  = await wbService.getWBSubjects_fromWB()
-            res.json(allWBCatalog)
+            const res  = await CatalogService.updateAllSubjects_inBD()
+            res.json(res)
         } catch (e) {
             console.log(e);
             next(e)
