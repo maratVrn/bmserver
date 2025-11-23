@@ -595,7 +595,7 @@ class ProductListService {
                     const step2 = 500
                     for (let j = 0; j < currProductList.length; j ++) {
                         try {
-  
+
                             let end_j = j + step2 - 1 < currProductList.length ? j + step2 - 1 : currProductList.length - 1
                             let productList = []
 
@@ -638,10 +638,12 @@ class ProductListService {
 
 
                     // Удаляем нерабочие ИД-ки
+                    let dd = parseInt(productList_tableName.replace('productList', ''))
+                    console.log(dd);
 
                     if (GlobalState.updateAllProductList.needDeleteNullID) {
-                        await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
-                        await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, parseInt(productList_tableName.replace('productList', '')))
+                      //  await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                        await ProductIdService.test(deleteIdArray, dd)
                     }
                     // Сохраним список удаленных ИД для прроверки
                     // let delArrayStr = ''

@@ -103,9 +103,23 @@ class SearchService{
     }
 
     async loadSearchDataFromFile(){
-        let result = ' ждем чего то '
+        let result = 'Загрузка завершена'
+        try {
+            let newDataJSON = []
 
-        return result
+            const newData = fs.readFileSync("log/searchArray.txt" , "utf-8");
+            newDataJSON = JSON.parse(newData)
+
+            console.log(newDataJSON.length);
+            const res = await this.SearchData.bulkCreate(newDataJSON,{    updateOnDuplicate: ["searchDataArray","addInfo"] }).then(() => {
+                console.log('Загрузка завершена');
+
+            })
+
+
+        } catch (e){ console.log(e);   result = 'Ошибка загрузки данных '}
+
+        return result;        return result
 
     }
 

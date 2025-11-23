@@ -220,7 +220,7 @@ class ProductIdService {
     // Проверяем соответсвуют ли ид-ки нужному каталогу catalogId и УДАЛЯЕМ только то которые соответсвуют
     // Используется перед удалением нерабочих на ВБ ИД-ков чтобы не удалить те которые пристутсвуют в другом каталог ИД
     async checkIdInCatalogID_andDestroy (idList, catalogId){
-
+        console.log(catalogId);
         // saveErrorLog('deleteId_'+catalogId.toString(), '    ---------------------------------------------         ')
         //
         // let idListString = ''
@@ -228,32 +228,34 @@ class ProductIdService {
         // saveErrorLog('deleteId_'+catalogId.toString(), 'Полный список на удаление всего '+idList.length)
         // saveErrorLog('deleteId_'+catalogId.toString(),idListString)
 
+        try {
+            // this.WBProductIdTable.tableName = 'wb_productIdListAll'
+            // await this.WBProductIdTable.sync({alter: true})
+            console.log(idList);
+            console.log(catalogId);
+            const needId = await this.WBProductIdTable.findAll({where: {id: idList}})
+            console.log('ddd');
+            let idToDelete = []
+            for (let i in needId)
+                if (needId[i].catalogId === catalogId) idToDelete.push(needId[i].id)
 
-        this.WBProductIdTable.tableName ='wb_productIdListAll'
-        await this.WBProductIdTable.sync({ alter: true })
-        const needId = await this.WBProductIdTable.findAll({ where: { id: idList }})
-        let idToDelete = []
-        for (let i in needId)
-            if (needId[i].catalogId === catalogId) idToDelete.push(needId[i].id)
+            // idListString = ''
+            // for (let j in idToDelete) idListString += idToDelete[j].toString()+' '
+            // saveErrorLog('deleteId_'+catalogId.toString(), 'Список на удаление в wb_productIdListAll всего '+idToDelete.length)
+            // saveErrorLog('deleteId_'+catalogId.toString(),idListString)
 
-        // idListString = ''
-        // for (let j in idToDelete) idListString += idToDelete[j].toString()+' '
-        // saveErrorLog('deleteId_'+catalogId.toString(), 'Список на удаление в wb_productIdListAll всего '+idToDelete.length)
-        // saveErrorLog('deleteId_'+catalogId.toString(),idListString)
-
-        await this.WBProductIdTable.destroy({where: {id: idToDelete}})
+            // await this.WBProductIdTable.destroy({where: {id: idToDelete}})
+        } catch (e) {    console.log(e); }
         return 'isOk'
     }
 
 
-    async test (){
+
+    async test (idList, catalogId){
         let testResult = ['fefe']
-        this.WBProductIdTable.tableName = 'wb_productIdList177'
-        const res = await this.WBProductIdTable.findOne({where: {id:176546906}})
-        console.log(res);
 
 
-        console.log('tutu');
+
         console.log('isOk');
         return testResult
     }

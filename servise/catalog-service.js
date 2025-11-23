@@ -86,7 +86,7 @@ class CatalogService{
         if (WBCatalog_ALL.catalogInfo) {
 
             for (let i = 0; i < WBCatalog_ALL.catalogInfo.length; i++){
-
+                console.log(i);
                 const curId = WBCatalog_ALL.catalogInfo[i].id
                 let isDuplicate = false
                 for (let k = i+1; k < WBCatalog_ALL.catalogInfo.length; k++)
