@@ -77,6 +77,15 @@ class ProductIdService {
         return isAllIdToUpdate
     }
 
+    async getCatalogListByIdList(idList){
+        let catalogList = []
+        this.WBProductIdTable.tableName ='wb_productIdListAll'
+        const needId = await this.WBProductIdTable.findAll({ where: { id: idList}})
+
+        for (let i in needId) catalogList.push(needId[i].catalogId)
+        return catalogList
+    }
+
     // НУЖНО!!! для загрузки новых карточек товаров Проверяем по загруженному списку есть ли эти данные в каталоге
     async viewNewProductsInfo(productListParserResult,catalogId){
         let IdList = []
@@ -139,7 +148,7 @@ class ProductIdService {
         console.log('Всего дубликатов '+counter);
         console.log('Сохраняем новые '+realNewProduct.length);
 
-        // let idListString = ''
+        let idListString = ''
         // saveErrorLog('deleteId', 'Новые ID в каталоге ' + catalogId);
         // for (let j in realNewProduct) idListString += realNewProduct[j].id.toString() + ' '
         // saveErrorLog('deleteId', idListString)

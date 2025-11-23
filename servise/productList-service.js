@@ -89,48 +89,6 @@ class ProductListService {
         return [idData, resCount]
     }
 
-    // Сохраняем найденные товары в базе данных - каждый товар в своем каталоге, ID  каталога ищем по соответсвию  subjectId  в таблице WBAllSubjects
-    async saveAllNewProductList (newProductList){
-        let saveResult = false
-        try {
-            // Сначала создадим ассоциативный массив ключ - catalogId значение - массив всех newProductList с заданным catalogId
-            const productListByCatalogIdMap = new Map()
-            console.log('Сохраняем товары общее кол-во '+ newProductList.length);
-            for (let i in newProductList) {
-                if (newProductList[i].catalogId) {
-
-                    // // ОТладка на нулевой каталог ИД
-                    // if (newProductList[i].catalogId === 0)
-                    //     saveParserFuncLog('noCatalogID', ' Нашли в переборе товара ' + newProductList[i].id + ' ---  предмет '+ newProductList[i].subjectId)
-
-
-                    if (productListByCatalogIdMap.has(newProductList[i].catalogId)) {
-
-                        const crArray = productListByCatalogIdMap.get(newProductList[i].catalogId)
-                        productListByCatalogIdMap.set(newProductList[i].catalogId, [...crArray, newProductList[i]])
-
-                    } else productListByCatalogIdMap.set(newProductList[i].catalogId, [newProductList[i]])
-                }
-            }
-
-            // Далее пройдемся по новому массиву и сохраним разово все элементы
-            for (let key of productListByCatalogIdMap.keys()) {
-                const isTable = await this.checkTableName(key)
-                if (isTable) {
-                    const saveArray = productListByCatalogIdMap.get(key)
-                    await this.WBCatalogProductList.bulkCreate(saveArray,{    updateOnDuplicate: ["totalQuantity"]  })
-                }
-            }
-
-
-            saveResult = true
-        } catch (error) {
-            saveErrorLog('productListService',`Ошибка в saveAllNewProductList`)
-            saveErrorLog('productListService', error)
-        }
-        return saveResult
-    }
-
     // Получим список имен всех таблиц
     async getAllProductListTableName(){
         let allProductListTableName = []
@@ -574,15 +532,39 @@ class ProductListService {
                 }
                 // cStart = duplicateProducts.length - cStart
                 // console.log('Добавили дубликатов '+cStart);
+
                 await this.WBCatalogProductList.destroy({where: {id: IdList}})
             }
         }
         return duplicateProducts
     }
 
+    // Собираем информацию сколько карточек по каим предметам лежит в каталоге
+    async getProductsCountBySubjectsInCatalog(catalogId, subjectsList){
+
+        let result = []
+        let allCount = 0
+        let crCountSum = 0
+
+        const isTable = await this.checkTableName(catalogId)
+        if (isTable){
+            allCount = await this.WBCatalogProductList.count()
+
+
+            for (let i in subjectsList){
+                const subjectId = subjectsList[i].id
+                const data = await this.WBCatalogProductList.findAll({where: {subjectId:subjectId}})
+                const crCount = data.length
+                crCountSum += crCount
+                result.push({num : parseInt(i),id : subjectId, name : subjectsList[i].name, count : crCount, parentName : subjectsList[i].parentName})
+            }
+
+        }
+        result.push({id : -1, name : 'другое', count : allCount-crCountSum, parentName : ''})
+        return result
+    }
 
     // НУЖНА!!! ПАРСННГ Глобальная задача - обновляем информацию в выюранноной таблице и там же сохраняем
-
     async updateAllWBProductListInfo_fromTable2(productList_tableName, needCalcData, updateAll = true){
         let updateResult = 'Старт обновления'
         let updateCount = 0

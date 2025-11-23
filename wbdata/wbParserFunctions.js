@@ -61,10 +61,7 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                 //     if (shard === '') needGetData = false
                 // }
 
-
                 url2 = encodeURI(url2)
-
-                // console.log(url2);
 
                 if (needGetData) await axios.get(url2).then(response => {
                     const resData = response.data.products
@@ -72,7 +69,7 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                     if (resData) {
 
                         const products = getWBCatalogDataFromJsonReq(resData)
-                        if (products.length < 100) needGetNextProducts = false
+                        if (resData.length < 100) needGetNextProducts = false
                         console.log('Страница ' + page + ' -->  Забрали продуктов :' + products.length);
                         currProductList = [...currProductList, ...products]
 
@@ -459,7 +456,56 @@ async function PARSER_GetProductListInfo(productIdList) {
 
 
 
+
+// Собираем ИД товаров по поисковому запросу (для определения ИД каталога и товаров в будущем в группе запросов)
+
+async function PARSER_GetProductListBySearchQuery(query, maxPage =3) {
+    let idList = []
+    let subjectList = []
+    let needGetData = true
+    let needGetNextProducts = true
+
+    for (let i = 1; i <= maxPage; i++) {
+        let page = i
+        needGetData = true
+        while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
+            try {
+
+
+                let url2 = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?dest=-1255987&inheritFilters=false&page=${page}&query=${query}&resultset=catalog&sort=popular`
+                url2 = encodeURI(url2)
+                // console.log(url2);
+
+                if (needGetData) await axios.get(url2).then(response => {
+                    const resData = response.data.products
+
+                    if (resData) {
+
+
+                        for (let j in resData) {
+                            idList.push(resData[j].id)
+                            subjectList.push(resData[j].subjectId)
+                        }
+                        if (resData.length < 100) needGetNextProducts = false
+                        console.log('Страница ' + page + ' -->  Забрали продуктов :' + resData.length);
+
+
+                    }
+                })
+                needGetData = false
+
+            } catch (err) {
+                // console.log(err);
+                // console.log(err);
+                needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListBySearchQuery', 'query ' + query)
+            }
+        }
+        if (!needGetNextProducts) break
+    }
+    return [idList, subjectList]
+
+}
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_SubjectsList, PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray,
-     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductIdInfo
+     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductIdInfo, PARSER_GetProductListBySearchQuery
 }

@@ -245,8 +245,6 @@ class TaskService{
                 saveErrorLog('taskService', error)
             }
 
-            break
-
 
         }
         if (GlobalState.loadNewProducts.onWork) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})

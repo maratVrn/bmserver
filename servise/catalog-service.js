@@ -1,73 +1,83 @@
 
-const {saveErrorLog} = require("./log");
-const {WBCatalogInfo, WBAllSubjects, WBCatalog} = require("../models/models");
+
+const { WBAllSubjects, WBCatalog} = require("../models/models");
 const {PARSER_SubjectsList} = require("../wbdata/wbParserFunctions");
-const request = require("request");
+
+const ProductListService = require('../servise/productList-service')
+const {saveParserFuncLog} = require("./log");
+const {where} = require("sequelize");
 const fs = require("fs");
+
+
 class CatalogService{
 
-    async test (){
-
-        let fs = require('fs'),
-            request = require('request');
-        let download = function(uri, filename, callback){
-            request.head(uri, function(err, res, body){
-                request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-            });
-        };
-
-        // await this.updateAllSubjects_inBD()
-      // return ' test ok'
-
+    async getCatalogInfo(){
         const WBCatalog_ALL = await WBCatalog.findOne({
             order: [ [ 'createdAt', 'DESC' ]],
         })
-
-        let allChildsCount = 0
-         const getImg = (child) =>{
-            allChildsCount ++
-
-            const curId = child.id
-
-            let uri = `https://static-basket-01.wbbasket.ru/vol1/wbx-catalog/promo_v2/${curId}.webp`
-
-            try {
-             download(uri, `/cat/${curId}.webp`, function(){
-
-            });
-            console.log(curId+' ok');}
-            catch (e) {console.log(curId+' -------------- ошибка -----  url : '+uri)}
-
-
-            if (child.childs)
-                if (child.childs.length > 0) for (let i in child.childs) getImg(child.childs[i])
-
-        }
-
-
-        if (WBCatalog_ALL.catalogLite) {
-
-            for (let i = 0; i < WBCatalog_ALL.catalogLite.length; i++) {
-                getImg(WBCatalog_ALL.catalogLite[i])
-
-                // const curId = WBCatalog_ALL.catalogInfo[i].id
-                //
-                // let uri = `https://static-basket-01.wbbasket.ru/vol1/wbx-catalog/promo_v2/${curId}.webp`
-                //
-                // try {
-                // await download(uri, `/cat/${curId}.webp`, function(){
-                //
-                // });
-                // console.log(curId+' ok');}
-                // catch (e) {console.log(curId+' -------------- ошибка -----  url : '+uri)}
-
-
-            }
-        }
-        console.log(allChildsCount);
-        return 'updateAllSubjects_inBD isOk '
-
+        let result = []
+        if (WBCatalog_ALL.catalogInfo)  result = WBCatalog_ALL.catalogInfo
+        return result
     }
+
+    // Возмем предметы из каталога и если надо удалим лишнее
+    async getCatalogIdInfo(id, needDelete = false, deleteIdList = []){
+        let subjectList = []
+        const oneC = await WBAllSubjects.findOne({where: {catalogId: id}})
+
+        if (oneC?.subjects) {
+            if (needDelete) {
+                let newSubjects = []
+
+                for (let i in oneC.subjects) {
+                    let needAdd = true
+                    for (let j in deleteIdList)
+                        if (deleteIdList[j] === oneC.subjects[i].id) {
+                            needAdd = false
+                            break
+                        }
+
+                    if (needAdd) newSubjects.push(oneC.subjects[i])
+
+                }
+
+                await WBAllSubjects.bulkCreate([{
+                    catalogId: id,
+                    subjects: newSubjects,
+                    addFilters: []
+                }], {updateOnDuplicate: ["subjects", 'addFilters']}).then()
+
+
+                subjectList = newSubjects
+            } else subjectList = oneC.subjects
+
+        }
+
+
+
+
+        const result = await  ProductListService.getProductsCountBySubjectsInCatalog(id, subjectList)
+        return result
+    }
+
+    // Добавим предметы в каталог
+    async addSubjectsInCatalog(id,newSubjects){
+        let res = ' ошибка сохранения '
+        try {
+            await WBAllSubjects.bulkCreate([{
+                catalogId: id,
+                subjects: newSubjects,
+                addFilters: []
+            }], {updateOnDuplicate: ["subjects", 'addFilters']}).then()
+            res = ' Данные сохранены успешно '
+        } catch (e) {console.log(e)};
+
+
+
+        return res
+    }
+
+
     // Формируем список категорий по
     async updateAllSubjects_inBD (){
         const WBCatalog_ALL = await WBCatalog.findOne({
@@ -119,6 +129,53 @@ class CatalogService{
 
         return result
     }
+
+    // Сохраним все предметы в файл
+    async saveAllSubjectsToFile (){
+        let result = 'Ошибка сохранения'
+
+        // const allSubjects = await WBAllSubjects.findAll({ where: { catalogId: [147,200]}})
+        const allSubjects = await WBAllSubjects.findAll()
+        let str = JSON.stringify(allSubjects)
+        let fs = require('fs');
+        fs.writeFile("log/subjects.txt", str, function(err) {
+            if (err) {
+                console.log(err);
+            }
+        })
+        result = ' Данные сохранены '
+        return result
+    }
+
+    async LoadAllSubjectsFromFile (){
+
+        let result = 'Загрузка завершена'
+         try {
+             let newDataJSON = []
+
+             let newData = []
+             await fs.readFile("log/subjects.txt", function(error,data){
+                 if(error) {  // если возникла ошибка
+                     return console.log(error);
+                 }
+                 newData = data.toString()
+                 newDataJSON = JSON.parse(newData)
+                 console.log(newDataJSON.length);
+                 WBAllSubjects.bulkCreate(newDataJSON,{    updateOnDuplicate: ["subjects","addFilters"] }).then(() => {
+                     console.log('Загрузка завершена');
+
+                 })
+
+             });
+
+
+         } catch (e){ console.log(e);   result = 'Ошибка загрузки данных '}
+
+        return result;
+    }
+
+
+
 }
 
 module.exports = new CatalogService()

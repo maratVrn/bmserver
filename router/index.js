@@ -17,14 +17,23 @@ router.get('/getAllTask', wbController.getAllTask)                       // За
 // Потоковые функции через task-service
 router.get('/loadNewProducts', wbController.loadNewProducts)
 router.get('/updateAllProductList', wbController.updateAllProductList)
-
-router.get('/deleteDuplicateID', wbController.deleteDuplicateID)         //  удаляем товары ДУБЛИКАТЫ которые по ошибке оказались не в том каталоге
-
+router.get('/deleteDuplicateID', wbController.deleteDuplicateID)
 
 
-// Разовые функции
+
+// Сервисные функции по работе с каталогом и предметами
 router.get('/getWBCatalog_fromWB', wbController.getWBCatalog_fromWB)        // получаем полный каталог товаров и сохраняем в таблицу wbCatalog // TODO: Продумать на обудущее сохранение - нужно ли его делать или просто обновлять текущий последний.. по сути это пока разовая функция
-router.get('/getAllProductCount', wbController.getAllProductCount)        // получаем полный каталог товаров и сохраняем в таблицу wbCatalog
+router.get('/getAllProductCount', wbController.getAllProductCount)          // получаем полный каталог товаров и сохраняем в таблицу wbCatalog
+router.get('/getCatalogInfo', wbController.getCatalogInfo)                  //
+router.post('/getCatalogIdInfo', wbController.getCatalogIdInfo)             // получаем список предметов по каталогу, этой же функцией удаляем не нужные если надо
+router.post('/addSubjectsInCatalog', wbController.addSubjectsInCatalog)     // устанавливаем предметы вручную если не получилось найти в авто режиме
+// Сохранение и загрузка предметов в каталоге
+router.get('/saveAllSubjectsToFile', wbController.saveAllSubjectsToFile)
+router.get('/loadAllSubjectsFromFile', wbController.LoadAllSubjectsFromFile)
+// Сохранение и загрузка поисковых фраз и соответсвий
+
+router.get('/saveSearchDataToFile', wbController.saveSearchDataToFile)
+router.get('/loadSearchDataFromFile', wbController.loadSearchDataFromFile)
 
 
 

@@ -62,8 +62,9 @@ function getCatalogChilds(data) {
     const id =  data?.id?  data?.id : 0
     const searchQuery =  data?.searchQuery?  data?.searchQuery : ''
     const shard =  data?.shard?  data?.shard : ''
+    const seo =  data?.seo?  data?.seo : ''
     let catArray = []
-    let catData = { id: id,  name : name,  childs: [], searchQuery : searchQuery, shard : shard}
+    let catData = { id: id,  name : name,  childs: [], searchQuery : searchQuery, shard : shard, seo : seo}
     if (data?.childs) {
         if (data?.childs.length > 0) {
             for (let j in data.childs) {

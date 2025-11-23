@@ -3,9 +3,10 @@ const ProductListService = require('../servise/productList-service')
 const ProductIdService= require('../servise/productId-service')
 const CatalogService = require('../servise/catalog-service')
 const TaskService = require('../servise/task-service')
+const SearchService = require('../servise/search-service')
 const WordStatisticService = require('../servise/wordStatistic-service')
 
-const {PARSER_GetProductIdInfo} = require("../wbdata/wbParserFunctions");
+
 
 
 
@@ -198,7 +199,9 @@ class WbController{
             // const testResult  = await wbService.getWBCatalog_fromWB()
             // const testResult  = await ProductListService.migrationALLToNewTableName()
 
-            const testResult  = await CatalogService.test()
+            // const testResult  = await CatalogService.test()
+            const testResult  = await SearchService.test()
+
 
 
             // const testResult  = 'isOk'
@@ -226,6 +229,88 @@ class WbController{
             return res.status(500).json({message:'uploadNewWordStatisticData error'})
         }
 
+    }
+
+    async getCatalogInfo (req, res, next) {
+
+        try {
+            const result  = await CatalogService.getCatalogInfo()
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+
+    }
+
+    async LoadAllSubjectsFromFile (req, res, next) {
+        try {
+
+            const  result  = await CatalogService.LoadAllSubjectsFromFile()
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
+    async saveAllSubjectsToFile (req, res, next) {
+        try {
+            const  result  = await CatalogService.saveAllSubjectsToFile()
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
+
+    async loadSearchDataFromFile (req, res, next) {
+        try {
+
+            const  result  = await SearchService.loadSearchDataFromFile()
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
+    async saveSearchDataToFile (req, res, next) {
+        try {
+            const  result  = await SearchService.saveSearchDataToFile()
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
+
+
+    async addSubjectsInCatalog (req, res, next) {
+        try {
+            const id = req.body.id? req.body.id : -1
+            const newSubjects    = req.body.newSubjects? req.body.newSubjects : []
+            let result = null
+            if (id>0)  result  = await CatalogService.addSubjectsInCatalog(id,newSubjects)
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
+    }
+
+
+
+    async getCatalogIdInfo (req, res, next) {
+        try {
+            const id = req.body.id? req.body.id : -1
+            const needDelete    = req.body.needDelete? req.body.needDelete : false
+            const deleteIdList = req.body.deleteIdList? req.body.deleteIdList : []
+            let result = null
+            if (id>0)  result  = await CatalogService.getCatalogIdInfo(id, needDelete, deleteIdList)
+            res.json(result)
+        } catch (e) {
+            console.log(e);
+            next(e)
+        }
     }
 
 

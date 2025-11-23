@@ -40,6 +40,7 @@ class WBService {
                 console.log('загрузили ' + productListParserResult.length);
 
                 const [realNewProduct, mapDuplicateIdListAnother ] = await ProductIdService.viewNewProductsInfo(productListParserResult,catalogParam.id)
+
                 const duplicateProducts = await ProductListService.viewNewProductsInfoToNewDuplicateProducts(mapDuplicateIdListAnother)
 
                 let AllNewProducts = [...realNewProduct];
