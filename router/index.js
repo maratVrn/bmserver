@@ -27,6 +27,8 @@ router.get('/getAllProductCount', wbController.getAllProductCount)          // �
 router.get('/getCatalogInfo', wbController.getCatalogInfo)                  //
 router.post('/getCatalogIdInfo', wbController.getCatalogIdInfo)             // получаем список предметов по каталогу, этой же функцией удаляем не нужные если надо
 router.post('/addSubjectsInCatalog', wbController.addSubjectsInCatalog)     // устанавливаем предметы вручную если не получилось найти в авто режиме
+
+
 // Сохранение и загрузка предметов в каталоге
 router.get('/saveAllSubjectsToFile', wbController.saveAllSubjectsToFile)
 router.get('/loadAllSubjectsFromFile', wbController.LoadAllSubjectsFromFile)

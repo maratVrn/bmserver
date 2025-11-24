@@ -638,17 +638,17 @@ class ProductListService {
 
 
                     // Удаляем нерабочие ИД-ки
-                    let dd = parseInt(productList_tableName.replace('productList', ''))
-                    console.log(dd);
-
-                    if (GlobalState.updateAllProductList.needDeleteNullID) {
-                      //  await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
-                        await ProductIdService.test(deleteIdArray, dd)
-                    }
                     // Сохраним список удаленных ИД для прроверки
                     // let delArrayStr = ''
                     // for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
                     // saveParserFuncLog(productList_tableName.toString(), delArrayStr)
+                    let catalogId = parseInt(productList_tableName.replace('productList', ''))
+
+                    if (GlobalState.updateAllProductList.needDeleteNullID) {
+                        await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, catalogId)
+                        await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                    }
+
 
                 }
 

@@ -167,7 +167,7 @@ class TaskService{
     }
 
     // НУЖНА БАЗОВАЯ ФУНКЦИЯ загружаем товары с вб ИЛИ обновляем если появились новые
-    async loadAllNewProductList (onlyNew = false, pageCount = 30){
+    async loadAllNewProductList (onlyNew = false, pageCount = 10){
 
         const taskName = 'loadAllNewProductList'
         let needTask = {}
@@ -324,7 +324,7 @@ class TaskService{
             if (!taskData[i].tableTaskEnd) try {
                 console.log(taskData[i].tableName);
                 const [updateResult,updateCount, deleteCount]  = await ProductListService.updateAllWBProductListInfo_fromTable2(taskData[i].tableName, needCalcData, updateAll)
-                // break
+
 
                 taskData[i].tableTaskEnd = true
                 taskData[i].tableTaskResult = updateResult
@@ -344,7 +344,7 @@ class TaskService{
                 saveErrorLog('taskService',`Ошибка в updateAllProductList при обновлении таблицы `+taskData[i].tableName)
                 saveErrorLog('taskService', error)
             }
-            // break // Отладка
+
         }
 
         if (GlobalState.updateAllProductList.onWork) await this.AllTask.update({isEnd: true}, {where: {id: needTask.id},})
