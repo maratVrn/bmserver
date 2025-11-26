@@ -1,8 +1,7 @@
 const axios = require('axios-https-proxy-fix');
-const {saveParserProductListLog, saveParserFuncLog, saveErrorLog} = require('../servise/log')
-const {DataTypes} = require("sequelize");
 const ProxyAndErrors = require('./proxy_and_errors')//require('../wbdata/proxy_and_errors');
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 
 // Парсим данным с конретной страницы
 function getWBCatalogDataFromJsonReq(data){
@@ -40,6 +39,13 @@ function getWBCatalogDataFromJsonReq(data){
     return currData
 }
 
+
+
+async function PARSER_Test(){
+    console.log('opa');
+
+
+}
 // Получаем список товарв для выбранного предмета и типа сортировки
 async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage){
     let currProductList = []
@@ -52,6 +58,23 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
         while (needGetData) {  // Делаем в цикле т.к. вдруг вылетит частое подключение к серверу то перезапустим
             try {
 
+                // Реалистичный User-Agent для Chrome на Windows
+                const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+                const myCookie = '_wbauid=6765218491734528856; device_id_guru=194998f12b7-b174c4e836df66e1; client_ip_guru=185.33.161.50; _ym_uid=1737743079802221903; _ym_d=1737743079; wbx-validation-key=dfcc3118-35ce-4dbc-b9f6-1007dec73bcd; _ga=GA1.1.1469849168.1758698546; _wbauid=3614179571758730129; _cp=1; _ga_TXRZMJQDFE=GS2.1.s1759049625$o5$g0$t1759049724$j60$l0$h0; routeb=1759133722.657.1972.933807|fc3b37d75a18d923fd0e9c7589719997; x_wbaas_token=1.1000.653ba36e4ba74ca89ea13a4ed2f0fa33.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2IEVkZy8xNDIuMC4wLjB8MTc2NDYxMzE2MHxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjQwMDgzNjA=.MEUCIH68UfMQ7saMxTvT0MA7MOAn7W2iuO9fxpC4QPMV3hhuAiEAkFq90j4vP5UXTE1Cc/aojbzV6DbXqHBv68O2y22ep6M='
+                // Дополнительные заголовки, характерные для браузера
+                const browserHeaders = {
+                    'User-Agent': userAgent,
+                    'Cookie' : myCookie,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+                    // 'Accept-Encoding': 'gzip, deflate, br', // Указываем поддержку сжатия
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+                    // 'Referer': 'www.google.com', // Можно добавить, если нужно имитировать переход с определенной страницы
+                };
+
+
+
                 const seo2 = catalogParam.searchQuery ? catalogParam.searchQuery : ''
                 const shard = catalogParam.shard ? catalogParam.shard : ''
                 let url2 = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?page=${page}&resultset=catalog&sort=${sort}&dest=-1255987&query=${seo2}&xsubject=${subjectID}`
@@ -63,9 +86,13 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
 
                 url2 = encodeURI(url2)
 
-                if (needGetData) await axios.get(url2).then(response => {
+                if (needGetData) await axios.get(url2,  {
+                    headers: browserHeaders,
+                    // Axios в Node.js автоматически обрабатывает сжатие (gzip, deflate)
+                }).then(response => {
                     const resData = response.data.products
-
+                    // console.log(response);
+                    console.log('resData.length -----> ' +resData.length);
                     if (resData) {
 
                         const products = getWBCatalogDataFromJsonReq(resData)
@@ -75,11 +102,12 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
 
                     }
                 })
+
+                // await delay(1000*1000);
                 needGetData = false
 
             } catch (err) {
-                console.log(err);
-                console.log(err);
+                console.log(err.message);
                 needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetCurrProductList', 'catalogParam.shard ' + catalogParam.shard)
             }
         }
@@ -507,5 +535,5 @@ async function PARSER_GetProductListBySearchQuery(query, maxPage =3) {
 }
 module.exports = {
     PARSER_GetBrandAndCategoriesList, PARSER_SubjectsList, PARSER_GetProductListInfo,PARSER_GetProductListInfoAll_fromIdArray,
-     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductIdInfo, PARSER_GetProductListBySearchQuery
+     PARSER_GetIDInfo, PARSER_GetProductList, PARSER_GetProductIdInfo, PARSER_GetProductListBySearchQuery, PARSER_Test,
 }

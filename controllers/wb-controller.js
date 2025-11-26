@@ -5,7 +5,7 @@ const CatalogService = require('../servise/catalog-service')
 const TaskService = require('../servise/task-service')
 const SearchService = require('../servise/search-service')
 const WordStatisticService = require('../servise/wordStatistic-service')
-
+const {PARSER_Test} = require("../wbdata/wbParserFunctions");
 
 
 
@@ -200,7 +200,7 @@ class WbController{
             // const testResult  = await ProductListService.migrationALLToNewTableName()
 
             // const testResult  = await CatalogService.test()
-            const testResult  = await SearchService.test()
+            const testResult  = await PARSER_Test()
 
 
 
