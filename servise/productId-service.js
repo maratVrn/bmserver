@@ -20,15 +20,16 @@ class ProductIdService {
         let resCount = 0
 
         try {
-            const countStart = await this.WBProductIdTable.count()
-            console.log('countStart = '+countStart);
+            // const countStart = await this.WBProductIdTable.count()
+            // console.log('countStart = '+countStart);
             this.WBProductIdTable.tableName ='wb_productIdListAll'
             await this.WBProductIdTable.sync({ alter: true })
 
             await this.WBProductIdTable.bulkCreate(idData,{    updateOnDuplicate: ["catalogId"]   })
-            const countEnd = await this.WBProductIdTable.count()
-            console.log('countEnd = '+countEnd);
-            resCount = countEnd - countStart
+            // const countEnd = await this.WBProductIdTable.count()
+            // console.log('countEnd = '+countEnd);
+            // resCount = countEnd - countStart
+            resCount = idData?.length? idData?.length : 0
             console.log('resCountID = '+resCount);
 
         }   catch (err) {

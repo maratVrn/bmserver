@@ -19,7 +19,7 @@ let GlobalState ={
     loadNewProducts : {
         onWork : false,
         loadPageCount : 10,
-        loadOnlyNew : false,
+        loadOnlyNew : true,
         disableButton : false,
         endState : 'Нет информации',
         endStateTime : ''
@@ -38,9 +38,9 @@ let GlobalState ={
     },
 
     updateAllProductList : {
-        onWork : false,
-        needCalcData : false,
-        needDeleteNullID : true,
+         onWork : false,
+        needCalcData : true,
+        needDeleteNullID : false,
         updateAll : true,
         endState : 'Нет информации',
         endStateTime : ''

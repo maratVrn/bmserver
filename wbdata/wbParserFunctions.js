@@ -33,7 +33,7 @@ function getWBCatalogDataFromJsonReq(data){
 
             }
             // Таким образом уходим от добавления в базу ресейла и разовых товаров
-            if (jsonData.totalQuantity>1) currData.push(jsonData)
+            if (jsonData.totalQuantity>2 ) currData.push(jsonData)
         } catch (err) {}
     }
     return currData
@@ -60,7 +60,8 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
 
                 // Реалистичный User-Agent для Chrome на Windows
                 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-                const myCookie = '_wbauid=6765218491734528856; device_id_guru=194998f12b7-b174c4e836df66e1; client_ip_guru=185.33.161.50; _ym_uid=1737743079802221903; _ym_d=1737743079; wbx-validation-key=dfcc3118-35ce-4dbc-b9f6-1007dec73bcd; _ga=GA1.1.1469849168.1758698546; _wbauid=3614179571758730129; _cp=1; _ga_TXRZMJQDFE=GS2.1.s1759049625$o5$g0$t1759049724$j60$l0$h0; routeb=1759133722.657.1972.933807|fc3b37d75a18d923fd0e9c7589719997; x_wbaas_token=1.1000.653ba36e4ba74ca89ea13a4ed2f0fa33.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2IEVkZy8xNDIuMC4wLjB8MTc2NDYxMzE2MHxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjQwMDgzNjA=.MEUCIH68UfMQ7saMxTvT0MA7MOAn7W2iuO9fxpC4QPMV3hhuAiEAkFq90j4vP5UXTE1Cc/aojbzV6DbXqHBv68O2y22ep6M='
+                const myCookie = '_wbauid=8898648211741974483; _ga_TXRZMJQDFE=GS2.1.s1758873409$o4$g0$t1758873409$j60$l0$h0; _ga=GA1.1.1123006456.1758441126; x_wbaas_token=1.1000.f0596dc8cffb4ce1bd9fff88b21a38ba.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ0LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ0LjB8MTc2NTMwNDM2N3xyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjQ2OTk1Njd8MQ==.MEQCICtUXrfnq1XoOpHFDqlUOXW1/+gZu5hJSZcID+UlQOBxAiBudDK1xEsauIkNulv/4N3PNj49BWUmHajTsYdcmQHEsQ=='
+
                 // Дополнительные заголовки, характерные для браузера
                 const browserHeaders = {
                     'User-Agent': userAgent,
@@ -79,6 +80,7 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                 const shard = catalogParam.shard ? catalogParam.shard : ''
                 let url2 = `https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search?page=${page}&resultset=catalog&sort=${sort}&dest=-1255987&query=${seo2}&xsubject=${subjectID}`
 
+                console.log(url2);
                 // if (seo2 === ''){
                 //     url2 = `https://www.wildberries.ru/__internal/u-catalog/catalog/${shard}/v8/filters?appType=1&cat=${catalogParam.id}&dest=-1255987&filters=ffsubject`
                 //     if (shard === '') needGetData = false
@@ -90,9 +92,14 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
                     headers: browserHeaders,
                     // Axios в Node.js автоматически обрабатывает сжатие (gzip, deflate)
                 }).then(response => {
-                    const resData = response.data.products
-                    // console.log(response);
-                    console.log('resData.length -----> ' +resData.length);
+                    const resData = response.data?.products
+                    // console.log(resData );
+
+                    if (resData?.length) console.log('resData.length -----> ' +resData?.length)
+                        else {
+                        console.log('resData нет данных')
+                        needGetNextProducts = false
+                    }
                     if (resData) {
 
                         const products = getWBCatalogDataFromJsonReq(resData)
@@ -108,7 +115,8 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
 
             } catch (err) {
                 console.log(err.message);
-                needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetCurrProductList', 'catalogParam.shard ' + catalogParam.shard)
+                needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetCurrProductList', 'catalogParam.shard ' + catalogParam.shard+
+                    ' catalogParam.id ' + catalogParam.id+' catalogParam.name ' + catalogParam.name)
             }
         }
         if (!needGetNextProducts) break
@@ -121,29 +129,37 @@ async function PARSER_GetProductList(catalogParam, subjectList, onlyNew = false,
     let productListParserResult = []
 
     for (let i in subjectList){
+        const currProductList = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'popular', pageCount) // 100
+        productListParserResult = [...productListParserResult, ...currProductList]
+        const currProductList6 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount)
+        productListParserResult = [...productListParserResult, ...currProductList6]
 
-        if (onlyNew){
-            const currProductList = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount) // 100
-            productListParserResult = [...productListParserResult, ...currProductList]
-        }else {
 
-            const currProductList = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'popular', pageCount) // 100
-            productListParserResult = [...productListParserResult, ...currProductList]
-
-            if (subjectList[i].count > 10000) {
-                const currProductList3 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'rate', pageCount)
-                productListParserResult = [...productListParserResult, ...currProductList3]
-                const currProductList4 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'priceup', pageCount)
-                productListParserResult = [...productListParserResult, ...currProductList4]
-                const currProductList5 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'pricedown', pageCount)
-                productListParserResult = [...productListParserResult, ...currProductList5]
-                const currProductList6 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount)
-                productListParserResult = [...productListParserResult, ...currProductList6]
-                const currProductList7 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'benefit', pageCount)
-                productListParserResult = [...productListParserResult, ...currProductList7]
-
-            }
-        }
+        // if (onlyNew){
+        //     // const currProductList = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount) // 100
+        //     const currProductList = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount) // 100
+        //     productListParserResult = [...productListParserResult, ...currProductList]
+        // }else {
+        //
+        //     const currProductList = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'popular', pageCount) // 100
+        //     productListParserResult = [...productListParserResult, ...currProductList]
+        //     const currProductList6 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount)
+        //     productListParserResult = [...productListParserResult, ...currProductList6]
+        //
+        //     // if (subjectList[i].count > 10000) {
+        //     //     const currProductList3 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'rate', pageCount)
+        //     //     productListParserResult = [...productListParserResult, ...currProductList3]
+        //     //     const currProductList4 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'priceup', pageCount)
+        //     //     productListParserResult = [...productListParserResult, ...currProductList4]
+        //     //     const currProductList5 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'pricedown', pageCount)
+        //     //     productListParserResult = [...productListParserResult, ...currProductList5]
+        //     //     const currProductList6 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'newly', pageCount)
+        //     //     productListParserResult = [...productListParserResult, ...currProductList6]
+        //     //     const currProductList7 = await PARSER_GetCurrProductList(catalogParam, subjectList[i].id, 'benefit', pageCount)
+        //     //     productListParserResult = [...productListParserResult, ...currProductList7]
+        //     //
+        //     // }
+        // }
         console.log(productListParserResult.length);
         // break // убрать
     }

@@ -267,6 +267,8 @@ class TaskService{
     async updateAllProductList (needCalcData = false, updateAll = true){
 
         console.log('needCalcData = '+needCalcData);
+        console.log('updateAll = '+updateAll);
+
         const taskName = 'updateAllProductList'
         let needTask = {}
         let allUpdateCount = 0
@@ -275,7 +277,7 @@ class TaskService{
         // Сначала разберемся с задачей - продолжать ли старую или создать новую
         saveParserFuncLog('taskService ', '  ----------  Запускаем задачу updateAllProductList -------')
         try {
-
+  
             const allNoEndTask = await this.AllTask.findAll({
                 where: {isEnd: false, taskName: taskName},
                 order: [['id']]
