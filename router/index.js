@@ -38,6 +38,10 @@ router.get('/saveSearchDataToFile', wbController.saveSearchDataToFile)
 router.get('/loadSearchDataFromFile', wbController.loadSearchDataFromFile)
 
 
+// Функции по работе со стартовыми товарами
+router.get('/loadStartProducts', wbController.loadStartProducts)
+router.post('/addStartProduct', wbController.addStartProduct)     // устанавливаем предметы вручную если не получилось найти в авто режиме
+
 
 // ВРЕМЕННЫЕ АПИ
 router.get('/wbServerTest', wbController.test)

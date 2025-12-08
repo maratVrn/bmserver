@@ -642,12 +642,13 @@ class ProductListService {
                     // let delArrayStr = ''
                     // for (let f in deleteIdArray) delArrayStr+=' '+deleteIdArray[f].toString()
                     // saveParserFuncLog(productList_tableName.toString(), delArrayStr)
-                    let catalogId = parseInt(productList_tableName.replace('productList', ''))
 
-                    if (GlobalState.updateAllProductList.needDeleteNullID) {
-                        await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, catalogId)
-                        await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
-                    }
+
+                    // let catalogId = parseInt(productList_tableName.replace('productList', ''))
+                    // if (GlobalState.updateAllProductList.needDeleteNullID) {
+                    //     await ProductIdService.checkIdInCatalogID_andDestroy(deleteIdArray, catalogId)
+                    //     await this.WBCatalogProductList.destroy({where: {id: deleteIdArray}})
+                    // }
 
 
                 }

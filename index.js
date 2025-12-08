@@ -27,13 +27,6 @@ app.use('/api', router)
 // Подключать вконце!
 app.use(errorMiddleware)
 
-const testData = [
-    {
-        id : 1,
-        body : "доступ к телу есть"
-    }
-]
-
 
 
 async function taskSchedule(arg) {
@@ -98,7 +91,7 @@ const start = async () => {
 
         // Запускаем функцию проверки состояния сервера
         // TODO: Запустить авто работу сервера
-       setInterval(taskSchedule, 1000*60, 'noArg');
+       // setInterval(taskSchedule, 1000*60, 'noArg');
 
 
 

@@ -90,7 +90,6 @@ async function PARSER_GetCurrProductList(catalogParam, subjectID, sort, maxPage)
 
                 if (needGetData) await axios.get(url2,  {
                     headers: browserHeaders,
-                    // Axios в Node.js автоматически обрабатывает сжатие (gzip, deflate)
                 }).then(response => {
                     const resData = response.data?.products
                     // console.log(resData );
@@ -409,16 +408,32 @@ async function PARSER_GetProductListInfo(productIdList) {
         try {
 
             const dt = new Date().toLocaleDateString()
+            // Реалистичный User-Agent для Chrome на Windows
+            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            const myCookie = '_wbauid=8898648211741974483; _ga_TXRZMJQDFE=GS2.1.s1758873409$o4$g0$t1758873409$j60$l0$h0; _ga=GA1.1.1123006456.1758441126; x_wbaas_token=1.1000.f0596dc8cffb4ce1bd9fff88b21a38ba.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ0LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ0LjB8MTc2NTMwNDM2N3xyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjQ2OTk1Njd8MQ==.MEQCICtUXrfnq1XoOpHFDqlUOXW1/+gZu5hJSZcID+UlQOBxAiBudDK1xEsauIkNulv/4N3PNj49BWUmHajTsYdcmQHEsQ=='
 
-            const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
-            // axios.get(url, {proxy: global.axiosProxy})
-            await axios.get(url).then(response => {
-                const resData = response.data
+            // Дополнительные заголовки, характерные для браузера
+            const browserHeaders = {
+                'User-Agent': userAgent,
+                'Cookie' : myCookie,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+                // 'Accept-Encoding': 'gzip, deflate, br', // Указываем поддержку сжатия
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1', // Сигнализирует о желании перейти на HTTPS
+                // 'Referer': 'www.google.com', // Можно добавить, если нужно имитировать переход с определенной страницы
+            };
+            // const url = `https://card.wb.ru/cards/v2/detail?appType=1&curr=rub&dest=-3390370&spp=30&ab_testing=false&nm=`+productListStr
+            const url = `https://www.wildberries.ru/__internal/u-card/cards/v4/list?dest=-3390370&nm=`+productListStr
 
-                if (resData.data) {
-                    console.log('-------------------->   '+resData.data.products.length);
-                    for (let i in resData.data.products){
-                        const currProduct = resData.data.products[i]
+
+            await axios.get(url, { headers: browserHeaders}).then(response => {
+                const products = response.data.products
+
+                if (products) {
+                    console.log('-------------------->   '+products.length);
+                    for (let i in products){
+                        const currProduct = products[i]
 
                         const totalQuantity = currProduct.totalQuantity?         parseInt(currProduct.totalQuantity)      : 0
                         //
@@ -487,6 +502,7 @@ async function PARSER_GetProductListInfo(productIdList) {
                 }})
             needGetData = false
         } catch (err) {
+            console.log(err.message);
             needGetData = await ProxyAndErrors.view_error(err, 'PARSER_GetProductListInfo', 'noData ')
         }
     }
