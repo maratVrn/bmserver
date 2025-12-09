@@ -4,7 +4,7 @@ const ProductIdService= require('../servise/productId-service')
 const CatalogService = require('../servise/catalog-service')
 const TaskService = require('../servise/task-service')
 const SearchService = require('../servise/search-service')
-const StartProductsService = require('../servise/startProducts-service')
+
 const WordStatisticService = require('../servise/wordStatistic-service')
 const {PARSER_Test} = require("../wbdata/wbParserFunctions");
 
@@ -284,15 +284,6 @@ class WbController{
         }
     }
 
-    async loadStartProducts (req, res, next) {
-        try {
-            const  result  = await StartProductsService.loadStartProducts()
-            res.json(result)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-    }
 
     async addSubjectsInCatalog (req, res, next) {
         try {
@@ -306,21 +297,7 @@ class WbController{
             next(e)
         }
     }
-    async addStartProduct (req, res, next) {
-        try {
-            const id = req.body.id? req.body.id : 0
-            const startDiscount    = req.body.startDiscount? req.body.startDiscount : 0
-            const startQty    = req.body.startQty? req.body.startQty : 0
 
-
-            let result = 0
-            if (id>0)  result  = await StartProductsService.addStartProduct(id, startDiscount, startQty)
-            res.json(result)
-        } catch (e) {
-            console.log(e);
-            next(e)
-        }
-    }
 
 
 
