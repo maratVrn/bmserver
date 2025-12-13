@@ -332,10 +332,12 @@ async function PARSER_GetProductIdInfo(id) {
                             // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
 
                             let price = -1
+                            let needCalcPrice = true
                             for (let k in currProduct.sizes) {
                                 if (currProduct.sizes[k]?.price) {
                                     price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product)  / 100): -1
-                                    break
+                                    if (price>0) needCalcPrice = false
+                                    if (!needCalcPrice) break
                                 }
                             }
 
@@ -452,10 +454,12 @@ async function PARSER_GetProductListInfo(productIdList) {
                             // Поиск цен. Пробегаемся по остаткам на размерах и если находим то прекращаем писк. Тут важно что если на остатках в размере 0 то и цен не будет
 
                             let price = -1
+                            let needCalcPrice = true
                             for (let k in currProduct.sizes) {
                                 if (currProduct.sizes[k]?.price) {
                                     price = currProduct.sizes[k]?.price?.product ? Math.round(parseInt(currProduct.sizes[k]?.price?.product)  / 100): -1
-                                    break
+                                    if (price>0) needCalcPrice = false
+                                    if (!needCalcPrice) break
                                 }
                             }
 
