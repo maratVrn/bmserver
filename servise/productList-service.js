@@ -580,7 +580,7 @@ class ProductListService {
                 const endId = await this.WBCatalogProductList.count()-1
                 if (endId === -1)  saveParserFuncLog('updateServiceInfo ', 'Нулевая таблица '+productList_tableName.toString())
 
-                const step = 100_000 //process.env.PARSER_MAX_QUANTITY_SEARCH
+                const step = 70_000 //process.env.PARSER_MAX_QUANTITY_SEARCH
 
                 for (let i = 0; i <= endId; i++) {
                     // const currProductList =  await this.WBCatalogProductList.findAll({offset: i, limit: step, order: [['id'] ] })

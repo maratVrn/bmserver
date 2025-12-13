@@ -63,7 +63,7 @@ async function taskSchedule(arg) {
             saveServerMessage('Запускаем Основную задачу updateAllProductList',getCurrDt() )
             GlobalState.updateAllProductList.onWork = true
             // await TaskService.updateAllProductList(GlobalState.updateAllProductList.needCalcData, GlobalState.updateAllProductList.updateAll)
-            await TaskService.updateAllProductList(false  , false  )
+            await TaskService.updateAllProductList(false  , true  )
         }
         else {
             console.log('Запускаем дополнительную задачу ');
@@ -91,7 +91,7 @@ const start = async () => {
 
         // Запускаем функцию проверки состояния сервера
         // TODO: Запустить авто работу сервера
-       // setInterval(taskSchedule, 1000*60, 'noArg');
+       setInterval(taskSchedule, 1000*60, 'noArg');
 
 
 

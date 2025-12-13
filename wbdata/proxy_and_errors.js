@@ -6,6 +6,7 @@ class ProxyAndErrors {
     myProxy = []
     config = {}
     proxyId = -1
+    cookie = '_wbauid=8898648211741974483; _ga_TXRZMJQDFE=GS2.1.s1758873409$o4$g0$t1758873409$j60$l0$h0; _ga=GA1.1.1123006456.1758441126; x_wbaas_token=1.1000.9e8a2fc92e904ccc9d21aad3eeea3191.MHwxMDkuMTA2LjEzNy4xNzR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NDsgcnY6MTQ1LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMTQ1LjB8MTc2NjUyMDkyNHxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NjU5MTYxMjR8MQ==.MEQCICOEblunxMICgDZJu3q8EynkE7qcrNHI38iA/X10EHK6AiB3DmRYhN0nlfq6fk6C6MffDauk0gieEsR3dGqYZCSWtA=='
     constructor() {
 
         this.myProxy.push({
